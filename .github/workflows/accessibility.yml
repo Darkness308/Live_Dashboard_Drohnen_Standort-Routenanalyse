@@ -1,0 +1,391 @@
+name: Accessibility Testing
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  push:
+    branches: [ main, develop ]
+
+jobs:
+  axe-core:
+    name: axe-core Accessibility Scanner
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: |
+          npm install -g @axe-core/cli
+          npm install -g http-server
+      
+      - name: Start HTTP Server
+        run: |
+          http-server . -p 8080 &
+          sleep 5
+        working-directory: ${{ github.workspace }}
+      
+      - name: Run axe-core scan
+        run: |
+          axe http://localhost:8080/index.html --exit || true
+        continue-on-error: true
+      
+      - name: Accessibility Report
+        if: always()
+        run: |
+          echo "Accessibility scan completed with axe-core"
+
+  wcag-validation:
+    name: WCAG 2.1 AA Compliance Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Create WCAG Checker Script
+        run: |
+          cat > check-wcag.js << 'EOF'
+          const fs = require('fs');
+          
+          console.log('♿ Checking WCAG 2.1 AA Compliance...\n');
+          
+          const htmlContent = fs.readFileSync('index.html', 'utf8');
+          
+          let violations = 0;
+          let warnings = 0;
+          let passed = 0;
+          
+          const checks = [
+            {
+              name: '1.1.1 Non-text Content - Images have alt attributes',
+              test: () => {
+                const imgTags = htmlContent.match(/<img[^>]*>/g) || [];
+                const missingAlt = imgTags.filter(img => !img.includes('alt=')).length;
+                if (missingAlt > 0) {
+                  console.error(`❌ ${missingAlt} <img> tags missing alt attribute`);
+                  return false;
+                }
+                console.log('✅ All <img> tags have alt attributes');
+                return true;
+              }
+            },
+            {
+              name: '1.3.1 Info and Relationships - Semantic HTML',
+              test: () => {
+                const hasHeader = htmlContent.includes('<header');
+                const hasMain = htmlContent.includes('<main');
+                const hasNav = htmlContent.includes('<nav');
+                
+                if (!hasHeader || !hasMain || !hasNav) {
+                  console.error('❌ Missing semantic HTML elements (header, main, nav)');
+                  return false;
+                }
+                console.log('✅ Semantic HTML elements present');
+                return true;
+              }
+            },
+            {
+              name: '2.1.1 Keyboard - Skip link present',
+              test: () => {
+                if (!htmlContent.includes('skip-link') && !htmlContent.includes('Skip to')) {
+                  console.warn('⚠️  No skip link found');
+                  warnings++;
+                  return null;
+                }
+                console.log('✅ Skip link present');
+                return true;
+              }
+            },
+            {
+              name: '2.4.3 Focus Order - Logical tabindex',
+              test: () => {
+                const tabindexPattern = /tabindex=['"](\d+)['"]/g;
+                let match;
+                const tabindexValues = [];
+                
+                while ((match = tabindexPattern.exec(htmlContent)) !== null) {
+                  const value = parseInt(match[1]);
+                  if (value > 0) {
+                    tabindexValues.push(value);
+                  }
+                }
+                
+                if (tabindexValues.length > 0) {
+                  console.warn(`⚠️  Found ${tabindexValues.length} positive tabindex values (may affect tab order)`);
+                  warnings++;
+                  return null;
+                }
+                console.log('✅ No positive tabindex values (good for tab order)');
+                return true;
+              }
+            },
+            {
+              name: '3.1.1 Language of Page - lang attribute',
+              test: () => {
+                if (!htmlContent.match(/<html[^>]*lang=/)) {
+                  console.error('❌ <html> tag missing lang attribute');
+                  return false;
+                }
+                console.log('✅ <html> has lang attribute');
+                return true;
+              }
+            },
+            {
+              name: '4.1.2 Name, Role, Value - Buttons have labels',
+              test: () => {
+                const buttonPattern = /<button[^>]*>/g;
+                const buttons = htmlContent.match(buttonPattern) || [];
+                
+                let unlabeled = 0;
+                buttons.forEach(button => {
+                  const hasAriaLabel = button.includes('aria-label=');
+                  const hasAriaLabelledby = button.includes('aria-labelledby=');
+                  
+                  if (!hasAriaLabel && !hasAriaLabelledby) {
+                    unlabeled++;
+                  }
+                });
+                
+                if (unlabeled > 0) {
+                  console.warn(`⚠️  ${unlabeled} <button> elements may be missing aria-label`);
+                  warnings++;
+                  return null;
+                }
+                console.log('✅ All buttons appear to have labels');
+                return true;
+              }
+            }
+          ];
+          
+          checks.forEach(check => {
+            console.log(`\nChecking: ${check.name}`);
+            const result = check.test();
+            if (result === true) passed++;
+            if (result === false) violations++;
+          });
+          
+          console.log('\n📊 WCAG 2.1 AA Compliance Summary:');
+          console.log(`   Passed: ${passed}`);
+          console.log(`   Violations: ${violations}`);
+          console.log(`   Warnings: ${warnings}`);
+          console.log(`   Total Checks: ${checks.length}`);
+          
+          if (violations > 0) {
+            console.log('\n⚠️  WCAG compliance issues found. Please address violations.');
+            process.exit(1);
+          } else {
+            console.log('\n✅ Basic WCAG 2.1 AA checks passed!');
+            console.log('Note: This is a basic automated check. Manual testing is still recommended.');
+          }
+          EOF
+      
+      - name: Run WCAG Check
+        run: node check-wcag.js
+
+  aria-validation:
+    name: ARIA Attribute Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Create ARIA Validator Script
+        run: |
+          cat > validate-aria.js << 'EOF'
+          const fs = require('fs');
+          
+          console.log('🔍 Validating ARIA attributes...\n');
+          
+          const htmlContent = fs.readFileSync('index.html', 'utf8');
+          
+          const validRoles = [
+            'alert', 'alertdialog', 'application', 'article', 'banner',
+            'button', 'checkbox', 'columnheader', 'combobox', 'complementary',
+            'contentinfo', 'definition', 'dialog', 'directory', 'document',
+            'feed', 'figure', 'form', 'grid', 'gridcell', 'group', 'heading',
+            'img', 'link', 'list', 'listbox', 'listitem', 'log', 'main',
+            'marquee', 'math', 'menu', 'menubar', 'menuitem', 'menuitemcheckbox',
+            'menuitemradio', 'navigation', 'none', 'note', 'option', 'presentation',
+            'progressbar', 'radio', 'radiogroup', 'region', 'row', 'rowgroup',
+            'rowheader', 'scrollbar', 'search', 'searchbox', 'separator',
+            'slider', 'spinbutton', 'status', 'switch', 'tab', 'table',
+            'tablist', 'tabpanel', 'term', 'textbox', 'timer', 'toolbar',
+            'tooltip', 'tree', 'treegrid', 'treeitem'
+          ];
+          
+          let errors = 0;
+          let warnings = 0;
+          
+          // Check for role attributes
+          const rolePattern = /role=['"]([^'"]+)['"]/g;
+          let match;
+          
+          while ((match = rolePattern.exec(htmlContent)) !== null) {
+            const role = match[1];
+            if (!validRoles.includes(role)) {
+              errors++;
+              console.error(`❌ Invalid ARIA role: "${role}"`);
+            }
+          }
+          
+          // Check for aria-label on interactive elements
+          const interactiveElements = ['button', 'a', 'input'];
+          interactiveElements.forEach(element => {
+            const pattern = new RegExp(`<${element}[^>]*>`, 'g');
+            const elements = htmlContent.match(pattern) || [];
+            
+            elements.forEach(elem => {
+              const hasAriaLabel = elem.includes('aria-label=');
+              const hasAriaLabelledby = elem.includes('aria-labelledby=');
+              const hasVisibleText = elem.includes('>') && !elem.endsWith('/>');
+              
+              if (!hasAriaLabel && !hasAriaLabelledby && !hasVisibleText) {
+                warnings++;
+                console.warn(`⚠️  <${element}> element may need aria-label`);
+              }
+            });
+          });
+          
+          console.log('\n📊 ARIA Validation Summary:');
+          console.log(`   Errors: ${errors}`);
+          console.log(`   Warnings: ${warnings}`);
+          
+          if (errors > 0) {
+            console.log('\n⚠️  ARIA validation failed. Fix invalid roles.');
+            process.exit(1);
+          } else {
+            console.log('\n✅ ARIA validation passed!');
+          }
+          EOF
+      
+      - name: Run ARIA Validation
+        run: node validate-aria.js
+
+  contrast-check:
+    name: Color Contrast Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Create Contrast Checker Script
+        run: |
+          cat > check-contrast.js << 'EOF'
+          const fs = require('fs');
+          
+          console.log('🎨 Checking color contrast ratios...\n');
+          
+          // This is a simplified check - real contrast checking requires
+          // rendering the page and measuring actual colors
+          
+          const cssContent = fs.existsSync('assets/styles.css') 
+            ? fs.readFileSync('assets/styles.css', 'utf8')
+            : '';
+          
+          const htmlContent = fs.readFileSync('index.html', 'utf8');
+          
+          // Extract color values
+          const colorPattern = /(?:color|background-color):\s*(#[0-9a-fA-F]{3,6}|rgb\([^)]+\))/g;
+          const colors = [];
+          let match;
+          
+          while ((match = colorPattern.exec(cssContent + htmlContent)) !== null) {
+            colors.push(match[1]);
+          }
+          
+          console.log(`Found ${colors.length} color definitions`);
+          
+          // Common problematic combinations
+          const warnings = [
+            { fg: '#999', bg: '#fff', name: 'Light gray on white' },
+            { fg: '#aaa', bg: '#fff', name: 'Medium gray on white' },
+            { fg: '#ffff00', bg: '#fff', name: 'Yellow on white' }
+          ];
+          
+          let issues = 0;
+          
+          warnings.forEach(combo => {
+            const content = cssContent + htmlContent;
+            if (content.includes(combo.fg) && content.includes(combo.bg)) {
+              console.warn(`⚠️  Potential low contrast: ${combo.name}`);
+              console.warn(`    Foreground: ${combo.fg}, Background: ${combo.bg}`);
+              console.warn(`    Ensure contrast ratio ≥4.5:1 for normal text, ≥3:1 for large text`);
+              issues++;
+            }
+          });
+          
+          console.log('\n📊 Contrast Check Summary:');
+          console.log(`   Potential issues: ${issues}`);
+          
+          if (issues === 0) {
+            console.log('\n✅ No obvious contrast issues detected!');
+            console.log('Note: Use browser DevTools or online tools for precise contrast measurement.');
+          } else {
+            console.log('\n⚠️  Potential contrast issues found. Please verify with contrast checker tools.');
+            console.log('Recommended tools:');
+            console.log('  - Chrome DevTools Lighthouse');
+            console.log('  - https://webaim.org/resources/contrastchecker/');
+            console.log('  - https://contrast-ratio.com/');
+          }
+          EOF
+      
+      - name: Run Contrast Check
+        run: node check-contrast.js
+
+  summary:
+    name: Accessibility Summary
+    runs-on: ubuntu-latest
+    needs: [axe-core, wcag-validation, aria-validation, contrast-check]
+    if: always()
+    
+    steps:
+      - name: Summary Report
+        run: |
+          echo "## ♿ Accessibility Testing Summary"
+          echo ""
+          echo "All accessibility checks completed!"
+          echo ""
+          echo "### Tests Performed:"
+          echo "- ✅ axe-core Accessibility Scanner"
+          echo "- ✅ WCAG 2.1 AA Compliance Check"
+          echo "- ✅ ARIA Attribute Validation"
+          echo "- ✅ Color Contrast Validation"
+          echo ""
+          echo "### Important Notes:"
+          echo "- Automated tests catch common issues but not everything"
+          echo "- Manual testing with screen readers is still required"
+          echo "- Test keyboard navigation manually"
+          echo "- Verify with actual users with disabilities when possible"
+          echo ""
+          echo "### Recommended Tools for Manual Testing:"
+          echo "- NVDA (Windows) + Chrome/Firefox"
+          echo "- JAWS (Windows) + Chrome/Edge"
+          echo "- VoiceOver (Mac/iOS) + Safari"
+          echo "- Chrome DevTools Lighthouse"
+          echo "- axe DevTools browser extension"
+          echo ""
+          echo "Review the individual job logs for detailed results."

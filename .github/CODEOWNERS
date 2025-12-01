@@ -1,0 +1,69 @@
+# CODEOWNERS - Code Ownership for MORPHEUS Dashboard
+# 
+# This file defines code ownership for different parts of the repository.
+# Code owners are automatically requested for review when someone opens a 
+# pull request that modifies code that they own.
+#
+# Syntax: path/to/file @username
+# Use * for wildcards
+# Last matching pattern takes precedence
+#
+# More info: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global owner - fallback for everything not specified below
+* @Darkness308
+
+# Documentation
+*.md @Darkness308
+/docs/ @Darkness308
+
+# Configuration files
+.gitignore @Darkness308
+.env.example @Darkness308
+*.yml @Darkness308
+*.yaml @Darkness308
+*.json @Darkness308
+
+# GitHub specific
+/.github/ @Darkness308
+/.github/workflows/ @Darkness308
+/.github/prompts/ @Darkness308
+
+# HTML - Main dashboard interface
+index.html @Darkness308
+
+# Assets - All JavaScript and CSS files
+/assets/ @Darkness308
+
+# Google Maps Integration - Critical for route visualization
+/assets/maps.js @Darkness308
+
+# Data Layer - GPS coordinates and route definitions (6 decimal precision required!)
+/assets/data.js @Darkness308
+
+# Charts & Visualizations - TA Lärm compliance charts
+/assets/charts.js @Darkness308
+
+# Styling - Tailwind overrides and custom styles
+/assets/styles.css @Darkness308
+
+# Accessibility & A11y
+# All changes that affect accessibility must be reviewed
+**/accessibility*.* @Darkness308
+**/*a11y*.* @Darkness308
+
+# Regulatory Compliance
+# Changes affecting TA Lärm calculations must be carefully reviewed
+**/*ta-laerm*.* @Darkness308
+**/*compliance*.* @Darkness308
+**/*regulatory*.* @Darkness308
+
+# Security-sensitive files
+**/.env @Darkness308
+**/secrets*.* @Darkness308
+**/config*.* @Darkness308
+
+# Build and deployment
+**/workflow*.* @Darkness308
+**/deploy*.* @Darkness308
+**/build*.* @Darkness308
