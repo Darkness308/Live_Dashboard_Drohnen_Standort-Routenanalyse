@@ -9,7 +9,7 @@ let markers = [];
 // Initialize Google Maps
 function initMap() {
   // Default center (Berlin)
-  const center = { lat: 52.5200, lng: 13.4050 };
+  const center = { lat: 52.520000, lng: 13.405000 };
   
   // Map configuration
   map = new google.maps.Map(document.getElementById("map"), {
