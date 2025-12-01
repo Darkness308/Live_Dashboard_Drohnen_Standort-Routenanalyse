@@ -1,0 +1,199 @@
+{
+  "zones": [
+    {
+      "id": "zone_residential_1",
+      "type": "residential",
+      "name": "Wohngebiet Süd",
+      "name_en": "Residential South",
+      "color": "#FEE2E2",
+      "border_color": "#EF4444",
+      "ta_limit_day_db": 55,
+      "ta_limit_night_db": 40,
+      "center": [13.3400, 52.4600],
+      "radius_m": 500,
+      "polygon": [
+        [13.3300, 52.4550],
+        [13.3500, 52.4550],
+        [13.3500, 52.4650],
+        [13.3300, 52.4650]
+      ],
+      "current_avg_db": 52,
+      "max_allowed_flights_hour": 8,
+      "current_flights_hour": 5,
+      "restricted_hours": ["22:00-06:00"]
+    },
+    {
+      "id": "zone_mixed_1",
+      "type": "mixed",
+      "name": "Mischgebiet Mitte",
+      "name_en": "Mixed Area Center",
+      "color": "#FEF3C7",
+      "border_color": "#F59E0B",
+      "ta_limit_day_db": 60,
+      "ta_limit_night_db": 45,
+      "center": [13.3550, 52.4800],
+      "radius_m": 400,
+      "polygon": [
+        [13.3450, 52.4750],
+        [13.3650, 52.4750],
+        [13.3650, 52.4850],
+        [13.3450, 52.4850]
+      ],
+      "current_avg_db": 56,
+      "max_allowed_flights_hour": 12,
+      "current_flights_hour": 8,
+      "restricted_hours": ["23:00-05:00"]
+    },
+    {
+      "id": "zone_commercial_1",
+      "type": "commercial",
+      "name": "Gewerbegebiet Ost",
+      "name_en": "Commercial East",
+      "color": "#DCFCE7",
+      "border_color": "#22C55E",
+      "ta_limit_day_db": 65,
+      "ta_limit_night_db": 50,
+      "center": [13.3750, 52.4750],
+      "radius_m": 350,
+      "polygon": [
+        [13.3650, 52.4700],
+        [13.3850, 52.4700],
+        [13.3850, 52.4800],
+        [13.3650, 52.4800]
+      ],
+      "current_avg_db": 61,
+      "max_allowed_flights_hour": 20,
+      "current_flights_hour": 12,
+      "restricted_hours": []
+    },
+    {
+      "id": "zone_industrial_1",
+      "type": "industrial",
+      "name": "Industriegebiet Nord",
+      "name_en": "Industrial North",
+      "color": "#DBEAFE",
+      "border_color": "#3B82F6",
+      "ta_limit_day_db": 70,
+      "ta_limit_night_db": 55,
+      "center": [13.3500, 52.4900],
+      "radius_m": 300,
+      "polygon": [
+        [13.3400, 52.4850],
+        [13.3600, 52.4850],
+        [13.3600, 52.4950],
+        [13.3400, 52.4950]
+      ],
+      "current_avg_db": 65,
+      "max_allowed_flights_hour": 30,
+      "current_flights_hour": 18,
+      "restricted_hours": []
+    },
+    {
+      "id": "zone_hospital_1",
+      "type": "hospital",
+      "name": "Klinikumgebung Charité",
+      "name_en": "Charité Hospital Area",
+      "color": "#FCE7F3",
+      "border_color": "#EC4899",
+      "ta_limit_day_db": 50,
+      "ta_limit_night_db": 35,
+      "center": [13.3770, 52.5256],
+      "radius_m": 250,
+      "polygon": [
+        [13.3700, 52.5200],
+        [13.3840, 52.5200],
+        [13.3840, 52.5310],
+        [13.3700, 52.5310]
+      ],
+      "current_avg_db": 45,
+      "max_allowed_flights_hour": 6,
+      "current_flights_hour": 3,
+      "restricted_hours": ["20:00-08:00"]
+    }
+  ],
+  "buffer_zones": [
+    {
+      "id": "buffer_school",
+      "type": "school_buffer",
+      "name": "Schulpufferzone",
+      "name_en": "School Buffer Zone",
+      "center": [13.3280, 52.4720],
+      "radius_m": 150,
+      "min_altitude_m": 80,
+      "max_speed_kmh": 40,
+      "noise_reduction_required_db": 5,
+      "active_hours": ["07:00-15:00"]
+    },
+    {
+      "id": "buffer_care",
+      "type": "care_facility_buffer",
+      "name": "Seniorenheim Pufferzone",
+      "name_en": "Care Facility Buffer Zone",
+      "center": [13.3120, 52.4580],
+      "radius_m": 200,
+      "min_altitude_m": 100,
+      "max_speed_kmh": 35,
+      "noise_reduction_required_db": 8,
+      "active_hours": ["06:00-22:00"]
+    }
+  ],
+  "no_fly_zones": [
+    {
+      "id": "nfz_government",
+      "type": "government",
+      "name": "Regierungsviertel",
+      "name_en": "Government District",
+      "center": [13.3770, 52.5180],
+      "radius_m": 500,
+      "reason": "Sicherheitszone Bundestag",
+      "permanent": true
+    },
+    {
+      "id": "nfz_airport",
+      "type": "airport",
+      "name": "BER Anflugzone",
+      "name_en": "BER Approach Zone",
+      "center": [13.5000, 52.3700],
+      "radius_m": 5000,
+      "reason": "Flughafen Sperrzone",
+      "permanent": true
+    }
+  ],
+  "ta_laerm_reference": {
+    "residential": {
+      "day_db": 55,
+      "night_db": 40,
+      "peak_allowance_db": 10,
+      "description": "Allgemeines Wohngebiet nach TA Lärm",
+      "description_en": "General residential area per TA Lärm"
+    },
+    "mixed": {
+      "day_db": 60,
+      "night_db": 45,
+      "peak_allowance_db": 10,
+      "description": "Mischgebiet nach TA Lärm",
+      "description_en": "Mixed use area per TA Lärm"
+    },
+    "commercial": {
+      "day_db": 65,
+      "night_db": 50,
+      "peak_allowance_db": 10,
+      "description": "Gewerbegebiet nach TA Lärm",
+      "description_en": "Commercial area per TA Lärm"
+    },
+    "industrial": {
+      "day_db": 70,
+      "night_db": 55,
+      "peak_allowance_db": 15,
+      "description": "Industriegebiet nach TA Lärm",
+      "description_en": "Industrial area per TA Lärm"
+    },
+    "hospital": {
+      "day_db": 50,
+      "night_db": 35,
+      "peak_allowance_db": 5,
+      "description": "Krankenhaus/Pflegeeinrichtung nach TA Lärm",
+      "description_en": "Hospital/Care facility per TA Lärm"
+    }
+  }
+}
