@@ -1,274 +1,279 @@
 # MORPHEUS Dashboard - Drohnen-Standort & Routenanalyse
 
-> **Interaktives Analyse-Dashboard für BVLOS-Drohnenroute mit TA Lärm Compliance, 3D-Visualisierung und Echtzeit-Routenvergleich**
+> **Gerichtsfestes Analyse-Dashboard für BVLOS-Drohnenrouten mit ISO 9613-2 Lärmberechnung, TA Lärm Compliance und amtlichen Geodaten**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Google Maps API](https://img.shields.io/badge/Google%20Maps-API-red.svg)](https://developers.google.com/maps)
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
+[![Leaflet](https://img.shields.io/badge/Leaflet-1.9.4-green.svg)](https://leafletjs.com/)
 [![WCAG 2.1 AA](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA-green.svg)](https://www.w3.org/WAI/WCAG21/quickref/)
 
 ## 🏷️ Topics
 
-`drone-logistics` · `google-maps-api` · `noise-analysis` · `ta-laerm` · `sail-iii` · `3d-visualization` · `bvlos` · `route-optimization` · `compliance-monitoring` · `tailwindcss` · `chartjs` · `responsive-design` · `accessibility`
+`drone-logistics` · `iso-9613-2` · `ta-laerm` · `noise-analysis` · `geoportal-nrw` · `alkis` · `leaflet` · `fastapi` · `postgis` · `certified-calculations` · `bvlos` · `route-optimization`
 
 ---
 
-Live Dashboard für automatisierte Drohnen mit Google Maps Integration, TA Lärm Compliance Visualisierung, 3-Routen-Vergleich, Immissionsorte Heatmap und Flottenstand Widget. Alle Daten aus validierten MORPHEUS Quellen (GPS, SAIL III, Regulatory Compliance).
+## 📐 Architektur: Dual-Layer System
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  LAYER 2: Frontend Dashboard (HTML/JS + Leaflet/CesiumJS)       │
+│  ├─ Interaktive Karte mit Routen & Lärmzonen                    │
+│  ├─ Echtzeit-Flottentracker                                     │
+│  └─ TA-Lärm Monitoring Dashboard                                │
+├─────────────────────────────────────────────────────────────────┤
+│  API Gateway (FastAPI)                                          │
+│  ├─ JWT Authentication                                          │
+│  ├─ Rate Limiting & Caching                                     │
+│  └─ Audit Logging (gerichtsfest)                                │
+├─────────────────────────────────────────────────────────────────┤
+│  LAYER 1: Certified Backend (Python + PostGIS)                  │
+│  ├─ ISO 9613-2 Schallausbreitungsberechnung                     │
+│  ├─ ALKIS/Lärmkartierung WFS Import (Geoportal NRW)             │
+│  ├─ CityGML LoD2 Parser (Gebäudeabschirmung)                    │
+│  └─ DWD Wetterdaten Integration                                 │
+├─────────────────────────────────────────────────────────────────┤
+│  Data Layer                                                     │
+│  ├─ PostGIS (amtliche + berechnete Daten)                       │
+│  ├─ Redis (Caching)                                             │
+│  └─ Audit Trail (JSONL)                                         │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ## 🚁 Features
 
-### Core Functionality
-- **Google Maps JavaScript API Integration**: Interaktive Karte mit 3D-Visualisierung
-- **TA Lärm Compliance Monitoring**: Echtzeit-Überwachung der Lärmschutzverordnung
-- **3-Routen-Vergleich**: Detaillierter Vergleich von drei optimierten Flugrouten
-- **Immissionsorte Heatmap**: Visualisierung von Lärmmessungen als Heatmap
-- **Flottenstand Widget**: Live-Status aller Drohnen in der Flotte
-- **Regulatory Compliance Dashboard**: EU 2019/945, EU 2019/947, SAIL III Status
+### Frontend Dashboard
+- **Leaflet.js Karte**: 3 Routenvarianten mit Toggle, Terrain/Satellit Layer
+- **Custom Marker**: Labor (grün), Krankenhäuser (blau), Sensoren (gelb/rot)
+- **Lärmzonen-Overlay**: Farbcodierte TA-Lärm Zonen mit Popup-Details
+- **Live Flottentracker**: 5x Auriol Drohnen mit Batterie, Position, ETA
+- **Flugplan-Tabelle**: Nächste 5 Flüge mit Wetterwarnungen
+- **TA-Lärm Matrix**: 10 Immissionsorte mit Echtzeit-Compliance
 
-### Technical Features
-- **Responsive Design**: Optimiert für Desktop, Tablet und Mobile
-- **Barrierefreiheit**: WCAG 2.1 AA konform
-- **Mehrsprachig**: Deutsch (DE) und Englisch (EN)
-- **Modulare Architektur**: Klare Trennung von Daten, Logik und Präsentation
-- **Modern Tech Stack**: Tailwind CSS, Chart.js, Google Maps API
+### Backend (Certified Core)
+- **ISO 9613-2 Berechnung**: Vollständige Implementierung mit Dämpfungskomponenten
+- **Geoportal NRW Integration**: ALKIS Flurstücke, Lärmkartierung WFS
+- **Audit-Logging**: Gerichtsfeste Protokollierung aller Berechnungen
+- **Pydantic Validierung**: Strenge Eingabevalidierung für alle Daten
 
 ## 📋 Voraussetzungen
 
+### Frontend
 - Moderner Webbrowser (Chrome, Firefox, Safari, Edge)
-- Google Maps JavaScript API Key
-- HTTP-Server für lokale Entwicklung (z.B. Python's `http.server`, Node.js `http-server`, oder Live Server in VS Code)
+- HTTP-Server für lokale Entwicklung
 
-## 🚀 Installation & Setup
+### Backend
+- Python 3.11+
+- PostgreSQL 15+ mit PostGIS
+- Redis (optional, für Caching)
 
-### 1. Repository klonen
+## 🚀 Installation
+
+### Frontend (Schnellstart)
 
 ```bash
+# Repository klonen
 git clone https://github.com/Darkness308/Live_Dashboard_Drohnen_Standort-Routenanalyse.git
 cd Live_Dashboard_Drohnen_Standort-Routenanalyse
-```
 
-### 2. Google Maps API Key konfigurieren
-
-1. Erstellen Sie einen Google Maps API Key:
-   - Besuchen Sie [Google Cloud Console](https://console.cloud.google.com/)
-   - Erstellen Sie ein neues Projekt oder wählen Sie ein bestehendes
-   - Aktivieren Sie die folgenden APIs:
-     - Maps JavaScript API
-     - Maps SDK for Android (optional)
-     - Places API (optional)
-   - Erstellen Sie einen API Key unter "Credentials"
-
-2. Konfigurieren Sie den API Key:
-   ```bash
-   cp .env.example .env
-   ```
-   
-3. Öffnen Sie die Datei `index.html` und ersetzen Sie `YOUR_API_KEY` mit Ihrem echten API Key:
-   ```javascript
-   const GOOGLE_MAPS_API_KEY = 'IHR_GOOGLE_MAPS_API_KEY';
-   ```
-
-   **Hinweis für Produktion**: In einer echten Produktionsumgebung sollten Sie den API Key serverseitig laden und nicht direkt im HTML einbetten.
-
-### 3. Lokalen Server starten
-
-#### Option A: Python (empfohlen)
-```bash
-# Python 3
+# Server starten
 python -m http.server 8000
 
-# Python 2
-python -m SimpleHTTPServer 8000
+# Browser öffnen
+open http://localhost:8000/dashboard.html
 ```
 
-#### Option B: Node.js http-server
+### Backend Installation
+
 ```bash
-npm install -g http-server
-http-server -p 8000
-```
+# Virtual Environment erstellen
+cd backend
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# oder: venv\Scripts\activate  # Windows
 
-#### Option C: VS Code Live Server
-- Installieren Sie die "Live Server" Extension in VS Code
-- Rechtsklick auf `index.html` → "Open with Live Server"
+# Dependencies installieren
+pip install -r requirements.txt
 
-### 4. Dashboard öffnen
+# NRW WFS-Dienste testen
+python -m backend.integrations.nrw_data_loader --check
 
-Öffnen Sie Ihren Browser und navigieren Sie zu:
-```
-http://localhost:8000
+# ISO 9613-2 Demo
+python -m backend.calculations.iso9613
 ```
 
 ## 📁 Projektstruktur
 
 ```
 Live_Dashboard_Drohnen_Standort-Routenanalyse/
-├── index.html              # Haupt-HTML-Datei mit Dashboard-Layout
+├── index.html                    # Original Dashboard (Google Maps)
+├── dashboard.html                # Neues Leaflet Dashboard
 ├── assets/
-│   ├── data.js            # Validierte MORPHEUS Datenquellen (GPS, SAIL III)
-│   ├── maps.js            # Google Maps API Integration & Interaktivität
-│   ├── charts.js          # Chart.js Visualisierungen
-│   └── styles.css         # Benutzerdefinierte CSS-Stile
-├── .env.example           # Beispiel-Umgebungskonfiguration
-├── .gitignore            # Git Ignore-Datei
-├── LICENSE               # Lizenz
-└── README.md             # Diese Datei
+│   ├── data.js                   # Mock-Daten
+│   ├── leaflet-map.js            # Leaflet.js Karten-Modul
+│   ├── fleet-dashboard.js        # Flottentracker
+│   ├── noise-dashboard.js        # TA-Lärm Monitoring
+│   ├── charts.js                 # Chart.js Visualisierungen
+│   ├── styles.css                # Benutzerdefinierte Stile
+│   └── geo/
+│       ├── routes.geojson        # Routenvarianten
+│       ├── locations.json        # Standorte & Immissionsorte
+│       └── noise_zones.json      # Lärmzonen & TA-Lärm Limits
+├── backend/
+│   ├── __init__.py
+│   ├── requirements.txt          # Python Dependencies
+│   ├── integrations/
+│   │   ├── __init__.py
+│   │   └── nrw_data_loader.py    # Geoportal NRW WFS Client
+│   ├── calculations/
+│   │   ├── __init__.py
+│   │   └── iso9613.py            # ISO 9613-2 Implementierung
+│   ├── models/
+│   │   ├── __init__.py
+│   │   └── schemas.py            # Pydantic Schemas
+│   ├── api/                      # FastAPI Endpoints
+│   ├── utils/                    # Hilfsfunktionen
+│   └── tests/                    # Unit Tests
+├── .github/
+│   ├── workflows/                # CI/CD Pipelines
+│   ├── prompts/                  # Copilot Prompts
+│   └── PULL_REQUEST_TEMPLATE.md
+├── AGENTS.md                     # AI Agent Guidelines
+├── CLAUDE.md                     # Claude Code Instructions
+├── README.md                     # Diese Datei
+└── LICENSE
 ```
 
-## 🎨 Komponenten
+## 🔊 ISO 9613-2 Schallausbreitung
 
-### 1. Flottenstand Widget
-Zeigt den aktuellen Status der Drohnenflotte:
-- Gesamtzahl der Drohnen
-- Aktive Drohnen im Flug
-- Drohnen im Ladevorgang
-- Drohnen in Wartung
+Die Backend-Implementierung berechnet die Schallausbreitung nach ISO 9613-2:1996:
 
-### 2. Interaktive Karte
-- **Immissionsorte**: Markierungen zeigen Lärmmessstationen
-- **3 Routen**: Farbcodierte Flugrouten (Blau, Grün, Orange)
-- **Heatmap**: Visualisierung der Lärmbelastung
-- **Toggle-Controls**: Ein-/Ausblenden von Routen und Heatmap
+```python
+from backend.calculations.iso9613 import ISO9613Calculator, NoiseSource, Receiver
 
-### 3. TA Lärm Compliance Chart
-- 24-Stunden-Überwachung der Lärmwerte
-- Visualisierung von Tag- und Nachtgrenzwerten
-- Compliance-Status für jede Messung
+# Drohne als Schallquelle
+source = NoiseSource.typical_drone(x=0, y=0, z=50)
 
-### 4. 3-Routen-Vergleich
-Detaillierte Tabelle mit:
-- Distanz (km)
-- Flugdauer (Minuten)
-- Lärmbelastung (dB)
-- Energieverbrauch (%)
-- TA Lärm Compliance-Status
+# Immissionsort
+receiver = Receiver(x=100, y=0, z=4, name="Wohngebiet")
 
-### 5. Multi-Metrik Radar Chart
-Vergleicht Routen anhand von:
-- Distanzeffizienz
-- Zeiteffizienz
-- Lärmbelastung
-- Energieeffizienz
-- Compliance-Status
+# Berechnung
+calc = ISO9613Calculator()
+result = calc.calculate(source, receiver)
 
-### 6. Historische Lärmbelastung
-Liniendiagramm zeigt 7-Tage-Trend für alle drei Routen
-
-### 7. Regulatory Compliance Status
-Übersicht über:
-- EU Drohnenverordnung (EU 2019/945 & EU 2019/947)
-- TA Lärm 1998 Standard
-- SAIL III Framework Status
-
-## 🌐 Internationalisierung
-
-Das Dashboard unterstützt zwei Sprachen:
-- **Deutsch (DE)**: Standard
-- **Englisch (EN)**: Über Sprachwahl in der Kopfzeile
-
-Sprachwechsel aktualisiert:
-- Alle UI-Texte
-- Chart-Beschriftungen
-- Tooltips und Hilfetexte
-
-## ♿ Barrierefreiheit (WCAG 2.1 AA)
-
-Das Dashboard erfüllt WCAG 2.1 AA Standards:
-
-### Implementierte Features:
-- **Semantisches HTML**: Korrekte Verwendung von `<header>`, `<main>`, `<nav>`, `<section>`
-- **ARIA Labels**: Alle interaktiven Elemente haben beschreibende Labels
-- **Keyboard Navigation**: Vollständige Bedienung ohne Maus möglich
-- **Focus Indicators**: Sichtbare Focus-States für Tastaturnavigation
-- **Skip Links**: "Skip to main content" Link am Seitenanfang
-- **Screen Reader Support**: Alt-Texte und ARIA-Beschreibungen
-- **Kontrastverhältnis**: Mindestens 4.5:1 für Text
-- **Responsive Text**: Skalierbar bis 200% ohne Funktionsverlust
-- **Reduzierte Bewegung**: Respektiert `prefers-reduced-motion`
-
-## 📊 Datenquellen
-
-Alle Daten stammen aus validierten MORPHEUS Quellen:
-
-### GPS-Daten
-- Echtzeit-Positionsdaten der Drohnen
-- Waypoint-Koordinaten für Routenplanung
-- Immissionsorte-Koordinaten
-
-### SAIL III (Specific Assurance and Integrity Level)
-- Routenvalidierung nach SAIL III Framework
-- Sicherheitsassessment
-- Integritätsprüfung
-
-### Regulatory Compliance
-- EU Drohnenverordnung 2019/945 & 2019/947
-- TA Lärm 1998 (Technische Anleitung zum Schutz gegen Lärm)
-- Kontinuierliche Compliance-Überwachung
-
-## 🔧 Anpassung
-
-### Eigene Daten verwenden
-
-Bearbeiten Sie `assets/data.js` um eigene Daten zu integrieren:
-
-```javascript
-// Beispiel: Neue Immissionsorte hinzufügen
-const immissionsorte = [
-  { 
-    id: 11, 
-    lat: 52.5300, 
-    lng: 13.4100, 
-    name: "Neuer Messpunkt", 
-    noiseLevel: 50, 
-    type: "residential" 
-  }
-  // ... weitere Punkte
-];
+print(f"Schallpegel: {result.sound_pressure_level:.1f} dB(A)")
+print(f"Dämpfung gesamt: {result.total_attenuation:.1f} dB")
 ```
 
-### Styling anpassen
+### Dämpfungskomponenten
 
-Ändern Sie CSS-Variablen in `assets/styles.css`:
+| Komponente | Formel | Beschreibung |
+|------------|--------|--------------|
+| Adiv | 20·log₁₀(d) + 11 | Geometrische Ausbreitung |
+| Aatm | α·d/1000 | Atmosphärische Absorption |
+| Agr | f(hs, hr, d, G) | Bodeneffekt |
+| Abar | Maekawa | Abschirmung durch Hindernisse |
 
-```css
-:root {
-  --primary-color: #3B82F6;
-  --secondary-color: #10B981;
-  /* ... weitere Farben */
+## 🗺️ Geoportal NRW Integration
+
+Der NRW Data Loader bindet amtliche Geodaten an:
+
+```python
+from backend.integrations.nrw_data_loader import NRWDataLoader
+
+loader = NRWDataLoader()
+
+# Dienste prüfen
+status = loader.check_service_availability()
+
+# ALKIS Flurstücke laden
+flurstuecke = loader.load_alkis_data(
+    bbox=(360000, 5660000, 370000, 5670000),
+    srs="EPSG:25832"
+)
+
+# Lärmkartierung laden
+laerm = loader.load_noise_data(
+    bbox=(360000, 5660000, 370000, 5670000),
+    noise_type="strasse"
+)
+```
+
+### Unterstützte Dienste
+
+| Dienst | URL | Daten |
+|--------|-----|-------|
+| ALKIS | wfs.nrw.de/geobasis/wfs_nw_alkis_vereinfacht | Flurstücke, Eigentumsart |
+| Lärmkartierung | wfs.nrw.de/umwelt/laermkartierung | Lden, Lnight |
+| CityGML | open.nrw (Download) | LoD2 Gebäudemodelle |
+
+## 📊 TA-Lärm Grenzwerte
+
+| Gebietstyp | Tag (06-22) | Nacht (22-06) |
+|------------|-------------|---------------|
+| Industriegebiet | 70 dB(A) | 70 dB(A) |
+| Gewerbegebiet | 65 dB(A) | 50 dB(A) |
+| Mischgebiet | 60 dB(A) | 45 dB(A) |
+| Allg. Wohngebiet | 55 dB(A) | 40 dB(A) |
+| Reines Wohngebiet | 50 dB(A) | 35 dB(A) |
+| Kurgebiet/Krankenhaus | 45 dB(A) | 35 dB(A) |
+
+## 🔒 Gerichtsfestigkeit
+
+Das Backend implementiert Audit-Logging für rechtssichere Dokumentation:
+
+```json
+{
+  "timestamp": "2024-12-01T19:00:00Z",
+  "data_source": "alkis",
+  "endpoint_url": "https://wfs.nrw.de/...",
+  "query_parameters": {"bbox": [...], "srs": "EPSG:25832"},
+  "response_hash": "sha256:abc123...",
+  "record_count": 150,
+  "processing_time_ms": 1234,
+  "success": true
 }
 ```
 
-### Weitere Routen hinzufügen
+## 🧪 Tests
 
-Erweitern Sie das `routeData` Objekt in `assets/data.js`:
+```bash
+# Backend Tests
+cd backend
+pytest tests/ -v --cov=.
 
-```javascript
-const routeData = {
-  route4: {
-    name: "Neue Route D",
-    color: "#8B5CF6",
-    distance: 9.5,
-    // ... weitere Eigenschaften
-  }
-};
+# Frontend Tests (falls vorhanden)
+npm test
 ```
 
-## 🐛 Troubleshooting
+## 📝 Dokumentation
 
-### Karte wird nicht angezeigt
-- Überprüfen Sie, ob der Google Maps API Key korrekt konfiguriert ist
-- Stellen Sie sicher, dass die Maps JavaScript API aktiviert ist
-- Prüfen Sie die Browser-Konsole auf Fehlermeldungen
+- **[AGENTS.md](AGENTS.md)**: Richtlinien für AI-Agenten
+- **[CLAUDE.md](CLAUDE.md)**: Claude Code Anweisungen
+- **[.github/README.md](.github/README.md)**: GitHub-spezifische Dokumentation
 
-### Charts werden nicht geladen
-- Öffnen Sie die Seite über einen HTTP-Server (nicht direkt als Datei)
-- Prüfen Sie, ob Chart.js korrekt geladen wird (siehe Browser-Konsole)
+## 🔄 Self-Healing & Automation
 
-### CORS-Fehler
-- Verwenden Sie einen lokalen HTTP-Server statt direktem Dateizugriff
-- Bei Remote-Servern: Konfigurieren Sie CORS-Header korrekt
+Das Projekt unterstützt automatische Fehlerbehebung:
+
+1. **Pre-Commit Hooks**: Linting & Formatierung
+2. **CI/CD Pipeline**: Tests bei jedem Push
+3. **Dependency Updates**: Dependabot aktiviert
+4. **Error Recovery**: Retry-Logik für WFS-Anfragen
+
+## 🌐 API Endpoints (geplant)
+
+```
+POST /api/v1/calculate/noise
+GET  /api/v1/routes/{route_id}
+GET  /api/v1/immissionsorte
+GET  /api/v1/compliance/report/{route_id}
+GET  /api/v1/audit/trail
+```
 
 ## 📝 Lizenz
 
-Dieses Projekt ist unter der MIT-Lizenz lizenziert. Siehe [LICENSE](LICENSE) Datei für Details.
+MIT License - siehe [LICENSE](LICENSE)
 
 ## 👥 Mitwirkende
 
@@ -277,33 +282,22 @@ Dieses Projekt ist unter der MIT-Lizenz lizenziert. Siehe [LICENSE](LICENSE) Dat
 
 ## 📧 Kontakt
 
-Bei Fragen oder Problemen erstellen Sie bitte ein Issue im GitHub Repository.
+Bei Fragen oder Problemen erstellen Sie bitte ein [Issue](https://github.com/Darkness308/Live_Dashboard_Drohnen_Standort-Routenanalyse/issues).
 
-## 🔄 Versionshistorie
+## 🔮 Roadmap
 
-### Version 1.0.0 (2023-12)
-- Initial Release
-- Google Maps Integration
-- TA Lärm Compliance Visualisierung
-- 3-Routen-Vergleich
-- Immissionsorte Heatmap
-- Flottenstand Widget
-- Mehrsprachigkeit (DE/EN)
-- WCAG 2.1 AA Compliance
+- [x] Leaflet.js Integration
+- [x] Flotten-Dashboard mit Live-Updates
+- [x] TA-Lärm Monitoring Dashboard
+- [x] ISO 9613-2 Backend-Implementierung
+- [x] Geoportal NRW WFS Integration
+- [ ] FastAPI REST-Endpoints
+- [ ] CesiumJS 3D-Visualisierung
+- [ ] CityGML LoD2 Parser
+- [ ] DWD Wetter-Integration
+- [ ] PDF/CSV Export
+- [ ] Mobile App
 
-## 🔮 Geplante Features
+---
 
-- [ ] Echtzeit-Datenanbindung über WebSocket
-- [ ] Historische Datenanalyse mit erweiterten Zeiträumen
-- [ ] Export-Funktionen (PDF, CSV)
-- [ ] Benutzerdefinierte Alarme und Benachrichtigungen
-- [ ] Mobile App (iOS/Android)
-- [ ] 3D-Terrain-Visualisierung
-- [ ] KI-gestützte Routenoptimierung
-
-## 🙏 Danksagungen
-
-- Google Maps Platform für die exzellente API
-- Chart.js Team für die leistungsstarke Visualisierungsbibliothek
-- Tailwind CSS für das moderne CSS-Framework
-- Open-Source Community
+**Zertifizierter Kern** | **Amtliche Daten** | **Gerichtsfeste Berechnung**
