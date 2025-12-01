@@ -154,7 +154,7 @@ async function initLeafletMap() {
     // Set up event listeners
     setupMapEventListeners();
 
-    console.log('Leaflet map initialized successfully');
+    console.info('Leaflet map initialized successfully');
 }
 
 // Load map data from JSON files
@@ -170,7 +170,7 @@ async function loadMapData() {
         mapData.locations = await locationsRes.json();
         mapData.noiseZones = await noiseZonesRes.json();
 
-        console.log('Map data loaded:', mapData);
+        console.info('Map data loaded:', mapData);
     } catch (error) {
         console.error('Error loading map data:', error);
         // Use fallback data if files not found
