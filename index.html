@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="MORPHEUS Dashboard - Live Dashboard für Drohnen-Standort und Routenanalyse mit TA Lärm Compliance">
+    <meta name="keywords" content="Drohnen, Dashboard, TA Lärm, Routenoptimierung, MORPHEUS, SAIL III">
+    <meta name="author" content="MORPHEUS Project">
+    
+    <title>MORPHEUS Dashboard - Drohnen-Standort & Routenanalyse</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="assets/styles.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚁</text></svg>">
+</head>
+<body class="bg-gray-50">
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <!-- Header -->
+    <header class="bg-white shadow-md" role="banner">
+        <nav class="container mx-auto px-4 py-4" role="navigation" aria-label="Main navigation">
+            <div class="flex flex-wrap items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <span class="text-3xl" role="img" aria-label="Drone icon">🚁</span>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-800">MORPHEUS Dashboard</h1>
+                        <p class="text-sm text-gray-600" id="headerSubtitle">Drohnen-Standort & Routenanalyse</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4 mt-4 sm:mt-0">
+                    <!-- Language Toggle -->
+                    <div class="flex items-center space-x-2">
+                        <label for="languageSelect" class="text-sm text-gray-700 font-medium">
+                            <span id="languageLabel">Sprache:</span>
+                        </label>
+                        <select id="languageSelect" 
+                                class="bg-gray-100 border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                aria-label="Language selection">
+                            <option value="de">Deutsch (DE)</option>
+                            <option value="en">English (EN)</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Compliance Status -->
+                    <div class="flex items-center space-x-2">
+                        <span class="compliance-indicator compliant" role="status" aria-label="Compliant"></span>
+                        <span class="text-sm font-medium text-green-600" id="complianceStatus">TA Lärm Konform</span>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main id="main-content" class="container mx-auto px-4 py-8" role="main">
+        
+        <!-- Fleet Status Widget -->
+        <section class="mb-8" aria-labelledby="fleet-status-heading">
+            <h2 id="fleet-status-heading" class="text-2xl font-bold text-gray-800 mb-4">
+                <span id="fleetStatusTitle">Flottenstand</span>
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Total Drones -->
+                <div class="metric-card dashboard-card">
+                    <div class="metric-icon">🚁</div>
+                    <div class="metric-value" id="totalDrones">12</div>
+                    <div class="metric-label" id="totalDronesLabel">Gesamt Drohnen</div>
+                </div>
+                
+                <!-- Active Drones -->
+                <div class="metric-card dashboard-card">
+                    <div class="metric-icon">✈️</div>
+                    <div class="metric-value text-green-600" id="activeDrones">8</div>
+                    <div class="metric-label" id="activeDronesLabel">Aktiv</div>
+                </div>
+                
+                <!-- Charging -->
+                <div class="metric-card dashboard-card">
+                    <div class="metric-icon">🔋</div>
+                    <div class="metric-value text-yellow-600" id="chargingDrones">2</div>
+                    <div class="metric-label" id="chargingDronesLabel">Wird geladen</div>
+                </div>
+                
+                <!-- Maintenance -->
+                <div class="metric-card dashboard-card">
+                    <div class="metric-icon">🔧</div>
+                    <div class="metric-value text-blue-600" id="maintenanceDrones">2</div>
+                    <div class="metric-label" id="maintenanceDronesLabel">Wartung</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Map Section -->
+        <section class="mb-8" aria-labelledby="map-section-heading">
+            <div class="bg-white rounded-lg shadow-md p-6 dashboard-card">
+                <div class="flex flex-wrap justify-between items-center mb-4">
+                    <h2 id="map-section-heading" class="text-2xl font-bold text-gray-800">
+                        <span id="mapTitle">Immissionsorte & Routen</span>
+                    </h2>
+                    
+                    <!-- Map Controls -->
+                    <div class="flex flex-wrap gap-4 mt-2 sm:mt-0">
+                        <!-- Heatmap Toggle -->
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <span class="text-sm text-gray-700" id="heatmapLabel">Heatmap</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="heatmapToggle" aria-label="Toggle heatmap">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </label>
+                        
+                        <!-- Route Toggles -->
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <span class="text-sm text-blue-600">● Route A</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked data-route-toggle="route1" aria-label="Toggle Route A">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </label>
+                        
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <span class="text-sm text-green-600">● Route B</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked data-route-toggle="route2" aria-label="Toggle Route B">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </label>
+                        
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <span class="text-sm text-amber-600">● Route C</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked data-route-toggle="route3" aria-label="Toggle Route C">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </label>
+                    </div>
+                </div>
+                
+                <div id="map" role="application" aria-label="Interactive map showing drone routes and noise measurement points"></div>
+            </div>
+        </section>
+
+        <!-- 3-Route Comparison Section -->
+        <section class="mb-8" aria-labelledby="route-comparison-heading">
+            <h2 id="route-comparison-heading" class="text-2xl font-bold text-gray-800 mb-4">
+                <span id="routeComparisonTitle">3-Routen-Vergleich</span>
+            </h2>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 dashboard-card overflow-x-auto">
+                <table class="route-table" role="table">
+                    <thead>
+                        <tr>
+                            <th scope="col"><span id="routeTableRoute">Route</span></th>
+                            <th scope="col"><span id="routeTableDistance">Distanz (km)</span></th>
+                            <th scope="col"><span id="routeTableDuration">Dauer (min)</span></th>
+                            <th scope="col"><span id="routeTableNoise">Lärm (dB)</span></th>
+                            <th scope="col"><span id="routeTableEnergy">Energie (%)</span></th>
+                            <th scope="col"><span id="routeTableCompliance">TA Lärm</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="font-semibold text-blue-600">● Optimierte Route A</span></td>
+                            <td>8.5</td>
+                            <td>18</td>
+                            <td>52</td>
+                            <td>75</td>
+                            <td><span class="status-badge success">✓ Konform</span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="font-semibold text-green-600">● Standardroute B</span></td>
+                            <td>9.2</td>
+                            <td>20</td>
+                            <td>58</td>
+                            <td>82</td>
+                            <td><span class="status-badge success">✓ Konform</span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="font-semibold text-amber-600">● Alternative Route C</span></td>
+                            <td>7.8</td>
+                            <td>16</td>
+                            <td>48</td>
+                            <td>68</td>
+                            <td><span class="status-badge success">✓ Konform</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Charts Section -->
+        <section class="mb-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                <!-- TA Lärm Compliance Chart -->
+                <div class="bg-white rounded-lg shadow-md p-6 dashboard-card" aria-labelledby="ta-laerm-chart-heading">
+                    <h3 id="ta-laerm-chart-heading" class="text-xl font-bold text-gray-800 mb-4">
+                        <span id="taLaermChartTitle">TA Lärm Compliance</span>
+                    </h3>
+                    <div class="chart-container">
+                        <canvas id="taLaermChart" role="img" aria-label="TA Lärm compliance chart showing noise levels throughout the day"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Route Comparison Radar Chart -->
+                <div class="bg-white rounded-lg shadow-md p-6 dashboard-card" aria-labelledby="route-radar-heading">
+                    <h3 id="route-radar-heading" class="text-xl font-bold text-gray-800 mb-4">
+                        <span id="routeRadarTitle">Multi-Metrik Vergleich</span>
+                    </h3>
+                    <div class="chart-container">
+                        <canvas id="routeComparisonChart" role="img" aria-label="Radar chart comparing multiple metrics across three routes"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Historical Noise Chart -->
+                <div class="bg-white rounded-lg shadow-md p-6 dashboard-card lg:col-span-2" aria-labelledby="historical-noise-heading">
+                    <h3 id="historical-noise-heading" class="text-xl font-bold text-gray-800 mb-4">
+                        <span id="historicalNoiseTitle">Historische Lärmbelastung</span>
+                    </h3>
+                    <div class="chart-container">
+                        <canvas id="noiseComparisonChart" role="img" aria-label="Line chart showing historical noise exposure over 7 days"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Regulatory Compliance Section -->
+        <section class="mb-8" aria-labelledby="compliance-heading">
+            <h2 id="compliance-heading" class="text-2xl font-bold text-gray-800 mb-4">
+                <span id="regulatoryComplianceTitle">Regulatory Compliance Status</span>
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- EU Drone Regulation -->
+                <div class="bg-white rounded-lg shadow-md p-6 dashboard-card">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-lg font-semibold text-gray-800" id="euRegTitle">EU Drohnenverordnung</h3>
+                        <span class="compliance-indicator compliant" role="status" aria-label="Compliant"></span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-2">EU 2019/945 & EU 2019/947</p>
+                    <p class="text-xs text-gray-500"><span id="lastCheckLabel">Letzte Prüfung:</span> 2023-11-15</p>
+                    <div class="mt-3">
+                        <span class="status-badge success" id="euRegStatus">✓ Konform</span>
+                    </div>
+                </div>
+                
+                <!-- TA Lärm -->
+                <div class="bg-white rounded-lg shadow-md p-6 dashboard-card">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-lg font-semibold text-gray-800">TA Lärm</h3>
+                        <span class="compliance-indicator compliant" role="status" aria-label="Compliant"></span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-2">TA Lärm 1998</p>
+                    <p class="text-xs text-gray-500"><span id="lastCheckLabel2">Letzte Prüfung:</span> 2023-11-20</p>
+                    <div class="mt-3">
+                        <span class="status-badge success" id="taLaermStatus">✓ Konform</span>
+                    </div>
+                </div>
+                
+                <!-- SAIL III -->
+                <div class="bg-white rounded-lg shadow-md p-6 dashboard-card">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-lg font-semibold text-gray-800">SAIL III</h3>
+                        <span class="compliance-indicator compliant" role="status" aria-label="Validated"></span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-2">Specific Assurance & Integrity Level</p>
+                    <p class="text-xs text-gray-500"><span id="lastCheckLabel3">Letzte Prüfung:</span> 2023-11-18</p>
+                    <div class="mt-3">
+                        <span class="status-badge success" id="sailStatus">✓ Validiert</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Data Sources Information -->
+        <section class="mb-8" aria-labelledby="data-sources-heading">
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                <h2 id="data-sources-heading" class="text-lg font-semibold text-blue-800 mb-2">
+                    <span id="dataSourcesTitle">Datenquellen</span>
+                </h2>
+                <ul class="text-sm text-blue-700 space-y-1">
+                    <li>• <strong>GPS:</strong> <span id="gpsSource">Echtzeit-Positionsdaten validiert durch MORPHEUS GPS-System</span></li>
+                    <li>• <strong>SAIL III:</strong> <span id="sailSource">Routenvalidierung gemäß SAIL III Framework</span></li>
+                    <li>• <strong>Regulatory Compliance:</strong> <span id="regSource">Kontinuierliche Überwachung nach EU 2019/945, EU 2019/947, und TA Lärm 1998</span></li>
+                </ul>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-6 mt-12" role="contentinfo">
+        <div class="container mx-auto px-4">
+            <div class="text-center">
+                <p class="text-sm" id="footerText">© 2023 MORPHEUS Dashboard - Alle Rechte vorbehalten</p>
+                <p class="text-xs text-gray-400 mt-2" id="footerNote">
+                    Entwickelt für automatisierte Drohnen-Routenanalyse unter Berücksichtigung europäischer Regularien
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Google Maps JavaScript API -->
+    <script>
+        // Load Google Maps API with your API key
+        // Replace YOUR_API_KEY with actual key from .env file
+        const GOOGLE_MAPS_API_KEY = 'YOUR_API_KEY'; // This should be loaded from .env in production
+        
+        function loadGoogleMapsAPI() {
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=visualization&callback=initMap`;
+            script.async = true;
+            script.defer = true;
+            document.head.appendChild(script);
+        }
+        
+        // Show message if API key is not configured
+        if (GOOGLE_MAPS_API_KEY === 'YOUR_API_KEY') {
+            document.getElementById('map').innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f3f4f6; border-radius: 0.5rem;">
+                    <div style="text-align: center; padding: 2rem;">
+                        <p style="color: #374151; font-weight: 600; margin-bottom: 0.5rem;">⚠️ Google Maps API Key Required</p>
+                        <p style="color: #6b7280; font-size: 0.875rem;">Please configure your Google Maps API key in the .env file.</p>
+                        <p style="color: #6b7280; font-size: 0.875rem;">See README.md for instructions.</p>
+                    </div>
+                </div>
+            `;
+        } else {
+            loadGoogleMapsAPI();
+        }
+    </script>
+
+    <!-- Load data and modules -->
+    <script src="assets/data.js"></script>
+    <script src="assets/maps.js"></script>
+    <script src="assets/charts.js"></script>
+    
+    <!-- Internationalization and App Initialization -->
+    <script>
+        // Current language
+        let currentLang = 'de';
+        
+        // Translations
+        const translations = {
+            de: {
+                headerSubtitle: 'Drohnen-Standort & Routenanalyse',
+                languageLabel: 'Sprache:',
+                complianceStatus: 'TA Lärm Konform',
+                fleetStatusTitle: 'Flottenstand',
+                totalDronesLabel: 'Gesamt Drohnen',
+                activeDronesLabel: 'Aktiv',
+                chargingDronesLabel: 'Wird geladen',
+                maintenanceDronesLabel: 'Wartung',
+                mapTitle: 'Immissionsorte & Routen',
+                heatmapLabel: 'Heatmap',
+                routeComparisonTitle: '3-Routen-Vergleich',
+                routeTableRoute: 'Route',
+                routeTableDistance: 'Distanz (km)',
+                routeTableDuration: 'Dauer (min)',
+                routeTableNoise: 'Lärm (dB)',
+                routeTableEnergy: 'Energie (%)',
+                routeTableCompliance: 'TA Lärm',
+                taLaermChartTitle: 'TA Lärm Compliance',
+                routeRadarTitle: 'Multi-Metrik Vergleich',
+                historicalNoiseTitle: 'Historische Lärmbelastung',
+                regulatoryComplianceTitle: 'Regulatory Compliance Status',
+                euRegTitle: 'EU Drohnenverordnung',
+                lastCheckLabel: 'Letzte Prüfung:',
+                euRegStatus: '✓ Konform',
+                taLaermStatus: '✓ Konform',
+                sailStatus: '✓ Validiert',
+                dataSourcesTitle: 'Datenquellen',
+                gpsSource: 'Echtzeit-Positionsdaten validiert durch MORPHEUS GPS-System',
+                sailSource: 'Routenvalidierung gemäß SAIL III Framework',
+                regSource: 'Kontinuierliche Überwachung nach EU 2019/945, EU 2019/947, und TA Lärm 1998',
+                footerText: '© 2023 MORPHEUS Dashboard - Alle Rechte vorbehalten',
+                footerNote: 'Entwickelt für automatisierte Drohnen-Routenanalyse unter Berücksichtigung europäischer Regularien'
+            },
+            en: {
+                headerSubtitle: 'Drone Location & Route Analysis',
+                languageLabel: 'Language:',
+                complianceStatus: 'TA Noise Compliant',
+                fleetStatusTitle: 'Fleet Status',
+                totalDronesLabel: 'Total Drones',
+                activeDronesLabel: 'Active',
+                chargingDronesLabel: 'Charging',
+                maintenanceDronesLabel: 'Maintenance',
+                mapTitle: 'Emission Points & Routes',
+                heatmapLabel: 'Heatmap',
+                routeComparisonTitle: '3-Route Comparison',
+                routeTableRoute: 'Route',
+                routeTableDistance: 'Distance (km)',
+                routeTableDuration: 'Duration (min)',
+                routeTableNoise: 'Noise (dB)',
+                routeTableEnergy: 'Energy (%)',
+                routeTableCompliance: 'TA Noise',
+                taLaermChartTitle: 'TA Noise Compliance',
+                routeRadarTitle: 'Multi-Metric Comparison',
+                historicalNoiseTitle: 'Historical Noise Exposure',
+                regulatoryComplianceTitle: 'Regulatory Compliance Status',
+                euRegTitle: 'EU Drone Regulation',
+                lastCheckLabel: 'Last Check:',
+                euRegStatus: '✓ Compliant',
+                taLaermStatus: '✓ Compliant',
+                sailStatus: '✓ Validated',
+                dataSourcesTitle: 'Data Sources',
+                gpsSource: 'Real-time position data validated by MORPHEUS GPS system',
+                sailSource: 'Route validation according to SAIL III framework',
+                regSource: 'Continuous monitoring according to EU 2019/945, EU 2019/947, and TA Lärm 1998',
+                footerText: '© 2023 MORPHEUS Dashboard - All Rights Reserved',
+                footerNote: 'Developed for automated drone route analysis considering European regulations'
+            }
+        };
+        
+        // Update page language
+        function updateLanguage(lang) {
+            currentLang = lang;
+            document.documentElement.lang = lang;
+            
+            // Update all translatable elements
+            Object.keys(translations[lang]).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) {
+                    element.textContent = translations[lang][key];
+                }
+            });
+            
+            // Update charts
+            if (typeof updateChartsLanguage === 'function') {
+                updateChartsLanguage();
+            }
+        }
+        
+        // Language selector event listener
+        document.getElementById('languageSelect').addEventListener('change', (e) => {
+            updateLanguage(e.target.value);
+        });
+        
+        // Update fleet status from data
+        function updateFleetStatus() {
+            document.getElementById('totalDrones').textContent = fleetData.totalDrones;
+            document.getElementById('activeDrones').textContent = fleetData.activeDrones;
+            document.getElementById('chargingDrones').textContent = fleetData.charging;
+            document.getElementById('maintenanceDrones').textContent = fleetData.maintenance;
+        }
+        
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', () => {
+            updateFleetStatus();
+            initCharts();
+        });
+    </script>
+</body>
+</html>
