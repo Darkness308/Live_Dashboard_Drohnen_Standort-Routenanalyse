@@ -38,6 +38,23 @@ function initMap() {
   setupRouteToggles();
 }
 
+// Get marker info window content with current language
+function getMarkerInfoContent(point) {
+  const lang = (typeof currentLang !== 'undefined' ? currentLang : 'de');
+  const labels = {
+    de: { noiseLevel: 'Lärmpegel', type: 'Typ' },
+    en: { noiseLevel: 'Noise Level', type: 'Type' }
+  };
+  
+  return `
+    <div style="padding: 8px; max-width: 200px;">
+      <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: bold;">${point.name}</h3>
+      <p style="margin: 4px 0;"><strong>${labels[lang].noiseLevel}:</strong> ${point.noiseLevel} dB(A)</p>
+      <p style="margin: 4px 0;"><strong>${labels[lang].type}:</strong> ${translateType(point.type)}</p>
+    </div>
+  `;
+}
+
 // Initialize Immissionsorte (noise measurement points) markers
 function initImmissionsortMarkers() {
   markers = [];
@@ -59,18 +76,14 @@ function initImmissionsortMarkers() {
 
     // Info window
     const infoWindow = new google.maps.InfoWindow({
-      content: `
-        <div style="padding: 8px; max-width: 200px;">
-          <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: bold;">${point.name}</h3>
-          <p style="margin: 4px 0;"><strong>Lärmpegel:</strong> ${point.noiseLevel} dB(A)</p>
-          <p style="margin: 4px 0;"><strong>Typ:</strong> ${translateType(point.type)}</p>
-        </div>
-      `
+      content: getMarkerInfoContent(point)
     });
 
     marker.addListener('click', () => {
       // Close all other info windows
       markers.forEach(m => m.infoWindow && m.infoWindow.close());
+      // Update content to current language before opening
+      infoWindow.setContent(getMarkerInfoContent(point));
       infoWindow.open(map, marker);
     });
 
@@ -173,18 +186,32 @@ function getNoiseColor(noiseLevel) {
   return '#EF4444'; // Red
 }
 
-// Translate type to German
+// Translate type to current language
 function translateType(type) {
   const translations = {
-    residential: 'Wohngebiet',
-    park: 'Park',
-    commercial: 'Gewerbegebiet',
-    cultural: 'Kulturstätte',
-    transport: 'Verkehrsknotenpunkt',
-    government: 'Behörde',
-    industrial: 'Industriegebiet'
+    de: {
+      residential: 'Wohngebiet',
+      park: 'Park',
+      commercial: 'Gewerbegebiet',
+      cultural: 'Kulturstätte',
+      transport: 'Verkehrsknotenpunkt',
+      government: 'Behörde',
+      industrial: 'Industriegebiet'
+    },
+    en: {
+      residential: 'Residential Area',
+      park: 'Park',
+      commercial: 'Commercial Area',
+      cultural: 'Cultural Site',
+      transport: 'Transport Hub',
+      government: 'Government',
+      industrial: 'Industrial Area'
+    }
   };
-  return translations[type] || type;
+  
+  // Get current language from global variable or default to 'de'
+  const lang = (typeof currentLang !== 'undefined' ? currentLang : 'de');
+  return translations[lang][type] || type;
 }
 
 // Fit map to show all routes

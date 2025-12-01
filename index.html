@@ -313,8 +313,14 @@
     <!-- Google Maps JavaScript API -->
     <script>
         // Load Google Maps API with your API key
-        // Replace YOUR_API_KEY with actual key from .env file
-        const GOOGLE_MAPS_API_KEY = 'YOUR_API_KEY'; // This should be loaded from .env in production
+        // IMPORTANT SECURITY NOTE: In production, the API key should be loaded server-side
+        // or restricted by domain/referrer in Google Cloud Console to prevent unauthorized use.
+        // This client-side implementation is for demonstration purposes.
+        // For production use, consider:
+        // 1. Setting up domain restrictions in Google Cloud Console
+        // 2. Using a backend proxy to hide the API key
+        // 3. Implementing request limits and monitoring
+        const GOOGLE_MAPS_API_KEY = 'YOUR_API_KEY'; // Replace with your API key (with domain restrictions)
         
         function loadGoogleMapsAPI() {
             const script = document.createElement('script');

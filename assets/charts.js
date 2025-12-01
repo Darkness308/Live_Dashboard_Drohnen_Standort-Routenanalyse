@@ -101,8 +101,8 @@ function initTALaermComplianceChart() {
         {
           label: currentLang === 'de' ? 'Gemessener Pegel' : 'Measured Level',
           data: values,
-          backgroundColor: values.map(v => {
-            const hour = parseInt(labels[values.indexOf(v)].split(':')[0]);
+          backgroundColor: values.map((v, index) => {
+            const hour = parseInt(labels[index].split(':')[0]);
             const isNight = hour >= 22 || hour < 6;
             const limit = isNight ? nightLimit : dayLimit;
             return v > limit ? '#EF4444' : '#10B981';
