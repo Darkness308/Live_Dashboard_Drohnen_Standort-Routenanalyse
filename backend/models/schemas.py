@@ -47,13 +47,13 @@ class BoundingBox(BaseModel):
     srs: CoordinateSystem = Field(default=CoordinateSystem.EPSG_25832)
 
     @validator('max_x')
-    def max_x_greater(cls, v, values):
+    def max_x_greater(self, v, values):
         if 'min_x' in values and v <= values['min_x']:
             raise ValueError('max_x muss größer als min_x sein')
         return v
 
     @validator('max_y')
-    def max_y_greater(cls, v, values):
+    def max_y_greater(self, v, values):
         if 'min_y' in values and v <= values['min_y']:
             raise ValueError('max_y muss größer als min_y sein')
         return v
@@ -112,7 +112,7 @@ class FlightRoute(BaseModel):
     estimated_duration_s: Optional[float] = None
 
     @validator('waypoints')
-    def at_least_two_waypoints(cls, v):
+    def at_least_two_waypoints(self, v):
         if len(v) < 2:
             raise ValueError('Route muss mindestens 2 Wegpunkte haben')
         return v

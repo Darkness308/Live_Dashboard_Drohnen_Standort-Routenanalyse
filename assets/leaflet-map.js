@@ -519,12 +519,6 @@ function createImmissionsortPopup(loc) {
 function initHeatmap() {
     if (!mapData.locations || !mapData.locations.immissionsorte) return;
 
-    const heatData = mapData.locations.immissionsorte.map(loc => {
-        // Normalize noise level for intensity (40-70 dB range)
-        const intensity = (loc.current_noise_db - 40) / 30;
-        return [loc.coordinates[1], loc.coordinates[0], Math.min(1, Math.max(0.1, intensity))];
-    });
-
     // Leaflet.heat plugin would be needed for actual heatmap
     // For now, create circle markers as pseudo-heatmap
     const heatGroup = L.layerGroup();

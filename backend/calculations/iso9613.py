@@ -318,25 +318,23 @@ class ISO9613Calculator:
         """
         hs = source.z  # Quellhöhe
         hr = receiver.z  # Empfängerhöhe
-        dp = math.sqrt(distance**2 - (hs - hr)**2)  # Projektion auf Boden
-
+        
+        diff_sq = distance**2 - (hs - hr)**2
+        if diff_sq < 0:
+            # Physikalisch nicht möglich, Rückgabe 0
+            return 0
+        dp = math.sqrt(diff_sq)  # Projektion auf Boden
         if dp < 1:
             return 0
-
         # Mittlere Höhe über dem Ausbreitungsweg
         hm = (hs + hr) / 2
-
         # Bodenfaktor G (0=hart, 1=weich)
         g = 0.5 if receiver.ground_type == GroundType.MIXED else \
             0.0 if receiver.ground_type == GroundType.HARD else 1.0
-
         # Vereinfachte Formel für mittlere Frequenzen
         # Agr = 4.8 - (2*hm/d) * [17 + (300/d)]
-        if dp > 0:
-            a_gr = 4.8 - (2 * hm / dp) * (17 + 300 / dp)
-            a_gr = max(0, min(a_gr, 10)) * g  # Begrenzen und mit G skalieren
-        else:
-            a_gr = 0
+        a_gr = 4.8 - (2 * hm / dp) * (17 + 300 / dp)
+        a_gr = max(0, min(a_gr, 10)) * g  # Begrenzen und mit G skalieren
 
         return a_gr
 
