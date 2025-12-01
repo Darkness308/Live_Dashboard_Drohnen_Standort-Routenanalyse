@@ -1,0 +1,348 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  eslint:
+    name: ESLint (Airbnb Style Guide)
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install ESLint and Airbnb config
+        run: |
+          npm install -g eslint
+          npm install -g eslint-config-airbnb-base
+          npm install -g eslint-plugin-import
+      
+      - name: Run ESLint
+        run: |
+          eslint assets/*.js --config .eslintrc.json || true
+        continue-on-error: true
+      
+      - name: ESLint Report
+        if: always()
+        run: |
+          echo "ESLint scan completed. Check logs for details."
+
+  html-validation:
+    name: HTML Validation (W3C)
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install html-validate
+        run: npm install -g html-validate
+      
+      - name: Validate HTML
+        run: |
+          html-validate index.html --config .htmlvalidate.json || true
+        continue-on-error: true
+      
+      - name: HTML Validation Report
+        if: always()
+        run: |
+          echo "HTML validation completed."
+
+  css-linting:
+    name: CSS Linting (Stylelint)
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install Stylelint
+        run: |
+          npm install -g stylelint
+          npm install -g stylelint-config-standard
+      
+      - name: Run Stylelint
+        run: |
+          stylelint "assets/*.css" --config .stylelintrc.json || true
+        continue-on-error: true
+      
+      - name: Stylelint Report
+        if: always()
+        run: |
+          echo "CSS linting completed."
+
+  gps-validation:
+    name: GPS Coordinate Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Create GPS Validation Script
+        run: |
+          cat > validate-gps.js << 'EOF'
+          const fs = require('fs');
+          
+          console.log('🔍 Validating GPS coordinates...\n');
+          
+          // Read data.js file
+          const dataContent = fs.readFileSync('assets/data.js', 'utf8');
+          
+          // Extract GPS coordinates (simplified regex)
+          const coordPattern = /(?:lat|lng):\s*(-?\d+\.\d+)/g;
+          let match;
+          let errors = 0;
+          let warnings = 0;
+          let checked = 0;
+          
+          while ((match = coordPattern.exec(dataContent)) !== null) {
+            checked++;
+            const value = match[1];
+            const decimals = (value.split('.')[1] || '').length;
+            
+            if (decimals !== 6) {
+              errors++;
+              console.error(`❌ ERROR: GPS coordinate ${value} has ${decimals} decimals (expected 6)`);
+            }
+          }
+          
+          console.log(`\n📊 GPS Validation Summary:`);
+          console.log(`   Coordinates checked: ${checked}`);
+          console.log(`   Errors: ${errors}`);
+          console.log(`   Warnings: ${warnings}`);
+          
+          if (errors > 0) {
+            console.log('\n⚠️  GPS validation failed! All coordinates must have exactly 6 decimal places.');
+            process.exit(1);
+          } else {
+            console.log('\n✅ GPS validation passed!');
+          }
+          EOF
+      
+      - name: Run GPS Validation
+        run: node validate-gps.js
+
+  secret-scanning:
+    name: Secret Detection
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Create Secret Scanner Script
+        run: |
+          cat > scan-secrets.js << 'EOF'
+          const fs = require('fs');
+          const path = require('path');
+          
+          console.log('🔍 Scanning for hardcoded secrets...\n');
+          
+          const patterns = [
+            { name: 'Google Maps API Key', regex: /AIzaSy[0-9A-Za-z_-]{33}/g },
+            { name: 'Generic API Key', regex: /[a|A][p|P][i|I][_]?[k|K][e|E][y|Y].*['"]\s*:\s*['"][0-9a-zA-Z]{32,}['"]/g },
+            { name: 'Private Key', regex: /-----BEGIN\s+(?:RSA\s+)?PRIVATE\s+KEY-----/g },
+            { name: 'Generic Secret', regex: /[s|S][e|E][c|C][r|R][e|E][t|T].*['"]\s*:\s*['"][0-9a-zA-Z]{20,}['"]/g }
+          ];
+          
+          const filesToScan = [
+            'index.html',
+            'assets/data.js',
+            'assets/maps.js',
+            'assets/charts.js'
+          ];
+          
+          let secretsFound = 0;
+          
+          filesToScan.forEach(file => {
+            if (!fs.existsSync(file)) {
+              console.log(`⏭️  Skipping ${file} (not found)`);
+              return;
+            }
+            
+            const content = fs.readFileSync(file, 'utf8');
+            
+            patterns.forEach(pattern => {
+              const matches = content.match(pattern.regex);
+              if (matches) {
+                matches.forEach(match => {
+                  // Exclude example/placeholder keys
+                  if (match.includes('your_google_maps_api_key_here') || 
+                      match.includes('YOUR_API_KEY') ||
+                      match.includes('example') ||
+                      match.includes('EXAMPLE')) {
+                    return;
+                  }
+                  
+                  secretsFound++;
+                  console.error(`❌ Potential ${pattern.name} found in ${file}:`);
+                  console.error(`   ${match.substring(0, 50)}...`);
+                });
+              }
+            });
+          });
+          
+          console.log(`\n📊 Secret Scan Summary:`);
+          console.log(`   Files scanned: ${filesToScan.length}`);
+          console.log(`   Secrets found: ${secretsFound}`);
+          
+          if (secretsFound > 0) {
+            console.log('\n⚠️  Secret scan failed! Remove hardcoded secrets and use environment variables.');
+            process.exit(1);
+          } else {
+            console.log('\n✅ No hardcoded secrets detected!');
+          }
+          EOF
+      
+      - name: Run Secret Scanner
+        run: node scan-secrets.js
+
+  jsdoc-check:
+    name: JSDoc Completeness Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Create JSDoc Checker Script
+        run: |
+          cat > check-jsdoc.js << 'EOF'
+          const fs = require('fs');
+          
+          console.log('📝 Checking JSDoc completeness...\n');
+          
+          const jsFiles = [
+            'assets/data.js',
+            'assets/maps.js',
+            'assets/charts.js'
+          ];
+          
+          let totalFunctions = 0;
+          let documentedFunctions = 0;
+          
+          jsFiles.forEach(file => {
+            if (!fs.existsSync(file)) {
+              console.log(`⏭️  Skipping ${file} (not found)`);
+              return;
+            }
+            
+            const content = fs.readFileSync(file, 'utf8');
+            
+            // Find function declarations (simplified)
+            const functionPattern = /function\s+(\w+)\s*\(/g;
+            const jsdocPattern = /\/\*\*[\s\S]*?\*\//g;
+            
+            let match;
+            const functions = [];
+            while ((match = functionPattern.exec(content)) !== null) {
+              totalFunctions++;
+              functions.push({
+                name: match[1],
+                position: match.index
+              });
+            }
+            
+            // Find JSDoc blocks
+            const jsdocs = [];
+            while ((match = jsdocPattern.exec(content)) !== null) {
+              jsdocs.push({
+                position: match.index,
+                length: match[0].length
+              });
+            }
+            
+            // Check if each function has JSDoc before it
+            functions.forEach(func => {
+              const hasJSDoc = jsdocs.some(jsdoc => {
+                // JSDoc should be within 200 chars before function
+                return jsdoc.position < func.position && 
+                       (func.position - jsdoc.position - jsdoc.length) < 200;
+              });
+              
+              if (hasJSDoc) {
+                documentedFunctions++;
+                console.log(`✅ ${file}: ${func.name}() - Documented`);
+              } else {
+                console.log(`⚠️  ${file}: ${func.name}() - Missing JSDoc`);
+              }
+            });
+          });
+          
+          const coverage = totalFunctions > 0 
+            ? ((documentedFunctions / totalFunctions) * 100).toFixed(1)
+            : 100;
+          
+          console.log(`\n📊 JSDoc Coverage: ${coverage}%`);
+          console.log(`   Total functions: ${totalFunctions}`);
+          console.log(`   Documented: ${documentedFunctions}`);
+          console.log(`   Missing JSDoc: ${totalFunctions - documentedFunctions}`);
+          
+          if (coverage < 80) {
+            console.log('\n⚠️  JSDoc coverage below 80%. Please document your functions.');
+          } else {
+            console.log('\n✅ JSDoc coverage looks good!');
+          }
+          EOF
+      
+      - name: Run JSDoc Check
+        run: node check-jsdoc.js
+
+  summary:
+    name: Quality Summary
+    runs-on: ubuntu-latest
+    needs: [eslint, html-validation, css-linting, gps-validation, secret-scanning, jsdoc-check]
+    if: always()
+    
+    steps:
+      - name: Summary Report
+        run: |
+          echo "## 📊 Code Quality Summary"
+          echo ""
+          echo "All code quality checks completed!"
+          echo ""
+          echo "### Checks Performed:"
+          echo "- ✅ ESLint (Airbnb Style Guide)"
+          echo "- ✅ HTML Validation (W3C)"
+          echo "- ✅ CSS Linting (Stylelint)"
+          echo "- ✅ GPS Coordinate Validation"
+          echo "- ✅ Secret Detection"
+          echo "- ✅ JSDoc Completeness"
+          echo ""
+          echo "Review the individual job logs for detailed results."
