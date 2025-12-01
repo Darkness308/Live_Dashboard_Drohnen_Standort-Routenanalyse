@@ -370,7 +370,7 @@ function renderNoiseStats() {
         quietHour: 'Quietest Hour'
     };
 
-    html = `
+    const html = `
         <div class="noise-stats-grid">
             <div class="stat-card ${stats.complianceRate >= 90 ? 'stat-good' : 'stat-warning'}">
                 <div class="stat-value">${stats.complianceRate}%</div>

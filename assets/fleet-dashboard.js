@@ -344,7 +344,7 @@ function renderPerformanceMetrics() {
         km: 'km'
     };
 
-    html = `
+    let html = `
         <div class="performance-header">
             <h3>${labels.title}</h3>
         </div>

@@ -14,11 +14,10 @@ Referenzen:
 """
 
 import logging
-import hashlib
 import json
 from datetime import datetime
 from dataclasses import dataclass, field
-from typing import Optional, List, Dict, Any, Generator
+from typing import Optional, List, Dict, Any
 from enum import Enum
 from pathlib import Path
 
@@ -33,23 +32,17 @@ except ImportError:
 
 try:
     from owslib.wfs import WebFeatureService
-    from owslib.wms import WebMapService
     OWSLIB_AVAILABLE = True
 except ImportError:
     OWSLIB_AVAILABLE = False
 
 try:
-    from shapely.geometry import shape, box, Point, Polygon
-    from shapely.ops import transform
+    from shapely.geometry import shape
     SHAPELY_AVAILABLE = True
 except ImportError:
     SHAPELY_AVAILABLE = False
 
-try:
-    import pyproj
-    PYPROJ_AVAILABLE = True
-except ImportError:
-    PYPROJ_AVAILABLE = False
+# pyproj import removed (unused)
 
 
 # Logger konfigurieren
@@ -491,8 +484,9 @@ class NRWDataLoader:
             if SHAPELY_AVAILABLE and geom:
                 try:
                     geometry = shape(geom)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    # GeoJSON Geometrie kann fehlerhaft sein; Fehler protokollieren und Flurstück ohne Geometrie weiterverarbeiten
+                    logger.warning(f"Fehler beim Parsen der Geometrie für Flurstück (ID: {props.get('gml_id', feature.get('id', ''))}): {exc}")
 
             flurstueck = ALKISFlurstueck(
                 gml_id=props.get('gml_id', feature.get('id', '')),
@@ -619,8 +613,9 @@ class NRWDataLoader:
             if SHAPELY_AVAILABLE and geom:
                 try:
                     geometry = shape(geom)
-                except Exception:
-                    pass
+                except Exception as e:
+                    # Fehler beim Parsen der Geometrie wird unterdrückt, da Geometrie optional ist.
+                    logger.debug(f"Fehler beim Parsen der Geometrie: {e}")
 
             measurement = NoiseMeasurement(
                 id=props.get('gml_id', feature.get('id', '')),
