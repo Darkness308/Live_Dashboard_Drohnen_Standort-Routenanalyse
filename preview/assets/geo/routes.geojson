@@ -1,0 +1,92 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_a",
+        "name": "Route A - Optimierte Lärmreduzierung",
+        "name_en": "Route A - Optimized Noise Reduction",
+        "color": "#EF4444",
+        "colorName": "red",
+        "distance_km": 12.3,
+        "duration_min": 8,
+        "noise_exposure_db": 48,
+        "energy_consumption_percent": 72,
+        "ta_compliant": true,
+        "priority": 1,
+        "waypoints_count": 6,
+        "description": "Umgehungsroute über Industriegebiet - minimale Lärmbelastung für Wohngebiete",
+        "description_en": "Bypass route via industrial area - minimal noise exposure for residential areas"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [13.3050, 52.4680],
+          [13.3180, 52.4750],
+          [13.3350, 52.4820],
+          [13.3520, 52.4890],
+          [13.3680, 52.4970],
+          [13.3850, 52.5050]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_b",
+        "name": "Route B - Standardroute",
+        "name_en": "Route B - Standard Route",
+        "color": "#22C55E",
+        "colorName": "green",
+        "distance_km": 10.8,
+        "duration_min": 7,
+        "noise_exposure_db": 52,
+        "energy_consumption_percent": 65,
+        "ta_compliant": true,
+        "priority": 2,
+        "waypoints_count": 5,
+        "description": "Direkte Route mit mittlerer Lärmbelastung - ausgewogenes Verhältnis",
+        "description_en": "Direct route with moderate noise exposure - balanced approach"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [13.3050, 52.4680],
+          [13.3200, 52.4780],
+          [13.3400, 52.4880],
+          [13.3600, 52.4980],
+          [13.3850, 52.5050]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "route_c",
+        "name": "Route C - Schnellroute",
+        "name_en": "Route C - Fast Route",
+        "color": "#F97316",
+        "colorName": "orange",
+        "distance_km": 9.5,
+        "duration_min": 5,
+        "noise_exposure_db": 58,
+        "energy_consumption_percent": 58,
+        "ta_compliant": true,
+        "priority": 3,
+        "waypoints_count": 4,
+        "description": "Kürzeste Route - höhere Lärmbelastung aber schnellste Lieferzeit",
+        "description_en": "Shortest route - higher noise exposure but fastest delivery time"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [13.3050, 52.4680],
+          [13.3300, 52.4820],
+          [13.3550, 52.4920],
+          [13.3850, 52.5050]
+        ]
+      }
+    }
+  ]
+}
