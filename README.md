@@ -1,5 +1,17 @@
 # MORPHEUS Dashboard - Drohnen-Standort & Routenanalyse
 
+> **Interaktives Analyse-Dashboard für BVLOS-Drohnenroute mit TA Lärm Compliance, 3D-Visualisierung und Echtzeit-Routenvergleich**
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Google Maps API](https://img.shields.io/badge/Google%20Maps-API-red.svg)](https://developers.google.com/maps)
+[![WCAG 2.1 AA](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA-green.svg)](https://www.w3.org/WAI/WCAG21/quickref/)
+
+## 🏷️ Topics
+
+`drone-logistics` · `google-maps-api` · `noise-analysis` · `ta-laerm` · `sail-iii` · `3d-visualization` · `bvlos` · `route-optimization` · `compliance-monitoring` · `tailwindcss` · `chartjs` · `responsive-design` · `accessibility`
+
+---
+
 Live Dashboard für automatisierte Drohnen mit Google Maps Integration, TA Lärm Compliance Visualisierung, 3-Routen-Vergleich, Immissionsorte Heatmap und Flottenstand Widget. Alle Daten aus validierten MORPHEUS Quellen (GPS, SAIL III, Regulatory Compliance).
 
 ## 🚁 Features
