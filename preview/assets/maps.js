@@ -10,23 +10,36 @@ let markers = [];
  * Validates GPS coordinates for required precision
  * @param {number} lat - Latitude coordinate
  * @param {number} lng - Longitude coordinate
- * @returns {boolean} True if coordinates have exactly 6 decimal places
- * @throws {Error} If coordinates are out of valid range
+ * @returns {boolean} True if coordinates have exactly 6 decimal places and are within valid range
  * @example
  * validateGpsCoordinates(51.371099, 7.693150) // returns true
  * validateGpsCoordinates(51.371, 7.693) // returns false
  */
 function validateGpsCoordinates(lat, lng) {
-  const latDecimals = (lat.toString().split('.')[1] || '').length;
-  const lngDecimals = (lng.toString().split('.')[1] || '').length;
-  
-  if (latDecimals !== 6 || lngDecimals !== 6) {
-    console.error(`GPS validation failed: lat=${lat} (${latDecimals} decimals), lng=${lng} (${lngDecimals} decimals)`);
+  // Check valid range first
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+    console.error(`GPS out of range: lat=${lat}, lng=${lng}`);
     return false;
   }
   
-  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-    console.error(`GPS out of range: lat=${lat}, lng=${lng}`);
+  // Convert to string and count decimal places
+  const latStr = lat.toString();
+  const lngStr = lng.toString();
+  
+  // Handle scientific notation by checking if the string contains 'e'
+  if (latStr.includes('e') || lngStr.includes('e')) {
+    console.error(`GPS validation failed: scientific notation not supported for lat=${lat}, lng=${lng}`);
+    return false;
+  }
+  
+  const latParts = latStr.split('.');
+  const lngParts = lngStr.split('.');
+  
+  const latDecimals = latParts.length > 1 ? latParts[1].length : 0;
+  const lngDecimals = lngParts.length > 1 ? lngParts[1].length : 0;
+  
+  if (latDecimals !== 6 || lngDecimals !== 6) {
+    console.error(`GPS validation failed: lat=${lat} (${latDecimals} decimals), lng=${lng} (${lngDecimals} decimals)`);
     return false;
   }
   
