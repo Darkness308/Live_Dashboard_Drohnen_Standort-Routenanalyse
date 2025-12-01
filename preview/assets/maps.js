@@ -6,6 +6,33 @@ let heatmap;
 let routePolylines = [];
 let markers = [];
 
+/**
+ * Validates GPS coordinates for required precision
+ * @param {number} lat - Latitude coordinate
+ * @param {number} lng - Longitude coordinate
+ * @returns {boolean} True if coordinates have exactly 6 decimal places
+ * @throws {Error} If coordinates are out of valid range
+ * @example
+ * validateGpsCoordinates(51.371099, 7.693150) // returns true
+ * validateGpsCoordinates(51.371, 7.693) // returns false
+ */
+function validateGpsCoordinates(lat, lng) {
+  const latDecimals = (lat.toString().split('.')[1] || '').length;
+  const lngDecimals = (lng.toString().split('.')[1] || '').length;
+  
+  if (latDecimals !== 6 || lngDecimals !== 6) {
+    console.error(`GPS validation failed: lat=${lat} (${latDecimals} decimals), lng=${lng} (${lngDecimals} decimals)`);
+    return false;
+  }
+  
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+    console.error(`GPS out of range: lat=${lat}, lng=${lng}`);
+    return false;
+  }
+  
+  return true;
+}
+
 // Initialize Google Maps
 function initMap() {
   // Default center (Iserlohn, MORPHEUS project location)
@@ -60,6 +87,12 @@ function initImmissionsortMarkers() {
   markers = [];
   
   immissionsorte.forEach(point => {
+    // Validate GPS coordinates before rendering
+    if (!validateGpsCoordinates(point.lat, point.lng)) {
+      console.warn(`Skipping marker for ${point.name} due to invalid GPS coordinates`);
+      return;
+    }
+    
     const marker = new google.maps.Marker({
       position: { lat: point.lat, lng: point.lng },
       map: map,
@@ -97,6 +130,21 @@ function initRoutePolylines() {
   routePolylines = [];
   
   Object.entries(routeData).forEach(([key, route]) => {
+    // Validate all waypoints before rendering
+    const validWaypoints = route.waypoints.filter(waypoint => {
+      const isValid = validateGpsCoordinates(waypoint.lat, waypoint.lng);
+      if (!isValid) {
+        console.warn(`Invalid waypoint in ${route.name}: lat=${waypoint.lat}, lng=${waypoint.lng}`);
+      }
+      return isValid;
+    });
+    
+    // Only render route if all waypoints are valid
+    if (validWaypoints.length !== route.waypoints.length) {
+      console.error(`Route ${route.name} has invalid waypoints. Skipping rendering.`);
+      return;
+    }
+    
     const polyline = new google.maps.Polyline({
       path: route.waypoints,
       geodesic: true,
