@@ -9,13 +9,13 @@
       "border_color": "#EF4444",
       "ta_limit_day_db": 55,
       "ta_limit_night_db": 40,
-      "center": [13.3400, 52.4600],
+      "center": [13.340000, 52.460000],
       "radius_m": 500,
       "polygon": [
-        [13.3300, 52.4550],
-        [13.3500, 52.4550],
-        [13.3500, 52.4650],
-        [13.3300, 52.4650]
+        [13.330000, 52.455000],
+        [13.350000, 52.455000],
+        [13.350000, 52.465000],
+        [13.330000, 52.465000]
       ],
       "current_avg_db": 52,
       "max_allowed_flights_hour": 8,
@@ -31,13 +31,13 @@
       "border_color": "#F59E0B",
       "ta_limit_day_db": 60,
       "ta_limit_night_db": 45,
-      "center": [13.3550, 52.4800],
+      "center": [13.355000, 52.480000],
       "radius_m": 400,
       "polygon": [
-        [13.3450, 52.4750],
-        [13.3650, 52.4750],
-        [13.3650, 52.4850],
-        [13.3450, 52.4850]
+        [13.345000, 52.475000],
+        [13.365000, 52.475000],
+        [13.365000, 52.485000],
+        [13.345000, 52.485000]
       ],
       "current_avg_db": 56,
       "max_allowed_flights_hour": 12,
@@ -53,13 +53,13 @@
       "border_color": "#22C55E",
       "ta_limit_day_db": 65,
       "ta_limit_night_db": 50,
-      "center": [13.3750, 52.4750],
+      "center": [13.375000, 52.475000],
       "radius_m": 350,
       "polygon": [
-        [13.3650, 52.4700],
-        [13.3850, 52.4700],
-        [13.3850, 52.4800],
-        [13.3650, 52.4800]
+        [13.365000, 52.470000],
+        [13.385000, 52.470000],
+        [13.385000, 52.480000],
+        [13.365000, 52.480000]
       ],
       "current_avg_db": 61,
       "max_allowed_flights_hour": 20,
@@ -75,13 +75,13 @@
       "border_color": "#3B82F6",
       "ta_limit_day_db": 70,
       "ta_limit_night_db": 55,
-      "center": [13.3500, 52.4900],
+      "center": [13.350000, 52.490000],
       "radius_m": 300,
       "polygon": [
-        [13.3400, 52.4850],
-        [13.3600, 52.4850],
-        [13.3600, 52.4950],
-        [13.3400, 52.4950]
+        [13.340000, 52.485000],
+        [13.360000, 52.485000],
+        [13.360000, 52.495000],
+        [13.340000, 52.495000]
       ],
       "current_avg_db": 65,
       "max_allowed_flights_hour": 30,
@@ -97,13 +97,13 @@
       "border_color": "#EC4899",
       "ta_limit_day_db": 50,
       "ta_limit_night_db": 35,
-      "center": [13.3770, 52.5256],
+      "center": [13.377000, 52.525600],
       "radius_m": 250,
       "polygon": [
-        [13.3700, 52.5200],
-        [13.3840, 52.5200],
-        [13.3840, 52.5310],
-        [13.3700, 52.5310]
+        [13.370000, 52.520000],
+        [13.384000, 52.520000],
+        [13.384000, 52.531000],
+        [13.370000, 52.531000]
       ],
       "current_avg_db": 45,
       "max_allowed_flights_hour": 6,
@@ -117,7 +117,7 @@
       "type": "school_buffer",
       "name": "Schulpufferzone",
       "name_en": "School Buffer Zone",
-      "center": [13.3280, 52.4720],
+      "center": [13.328000, 52.472000],
       "radius_m": 150,
       "min_altitude_m": 80,
       "max_speed_kmh": 40,
@@ -129,7 +129,7 @@
       "type": "care_facility_buffer",
       "name": "Seniorenheim Pufferzone",
       "name_en": "Care Facility Buffer Zone",
-      "center": [13.3120, 52.4580],
+      "center": [13.312000, 52.458000],
       "radius_m": 200,
       "min_altitude_m": 100,
       "max_speed_kmh": 35,
@@ -143,7 +143,7 @@
       "type": "government",
       "name": "Regierungsviertel",
       "name_en": "Government District",
-      "center": [13.3770, 52.5180],
+      "center": [13.377000, 52.518000],
       "radius_m": 500,
       "reason": "Sicherheitszone Bundestag",
       "permanent": true
@@ -153,7 +153,7 @@
       "type": "airport",
       "name": "BER Anflugzone",
       "name_en": "BER Approach Zone",
-      "center": [13.5000, 52.3700],
+      "center": [13.500000, 52.370000],
       "radius_m": 5000,
       "reason": "Flughafen Sperrzone",
       "permanent": true
