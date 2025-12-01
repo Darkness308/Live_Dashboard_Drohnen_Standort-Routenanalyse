@@ -462,6 +462,7 @@
         
         // Initialize application
         document.addEventListener('DOMContentLoaded', () => {
+            currentLang = 'de'; // Ensure it's explicitly set before chart/UI initialization
             updateFleetStatus();
             initCharts();
         });
