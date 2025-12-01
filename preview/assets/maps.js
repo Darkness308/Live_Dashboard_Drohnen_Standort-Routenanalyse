@@ -8,8 +8,8 @@ let markers = [];
 
 // Initialize Google Maps
 function initMap() {
-  // Default center (Berlin)
-  const center = { lat: 52.5200, lng: 13.4050 };
+  // Default center (Iserlohn, MORPHEUS project location)
+  const center = { lat: 51.371099, lng: 7.693150 };
   
   // Map configuration
   map = new google.maps.Map(document.getElementById("map"), {
