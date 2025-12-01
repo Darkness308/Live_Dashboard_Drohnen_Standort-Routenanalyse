@@ -42,7 +42,11 @@ try:
 except ImportError:
     SHAPELY_AVAILABLE = False
 
-# pyproj import removed (unused)
+try:
+    import pyproj
+    PYPROJ_AVAILABLE = True
+except ImportError:
+    PYPROJ_AVAILABLE = False
 
 
 # Logger konfigurieren
@@ -484,9 +488,9 @@ class NRWDataLoader:
             if SHAPELY_AVAILABLE and geom:
                 try:
                     geometry = shape(geom)
-                except Exception as exc:
+                except Exception as e:
                     # GeoJSON Geometrie kann fehlerhaft sein; Fehler protokollieren und Flurstück ohne Geometrie weiterverarbeiten
-                    logger.warning(f"Fehler beim Parsen der Geometrie für Flurstück (ID: {props.get('gml_id', feature.get('id', ''))}): {exc}")
+                    logger.warning(f"Fehler beim Parsen der Geometrie für Flurstück (ID: {props.get('gml_id', feature.get('id', ''))}): {e}")
 
             flurstueck = ALKISFlurstueck(
                 gml_id=props.get('gml_id', feature.get('id', '')),

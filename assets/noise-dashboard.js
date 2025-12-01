@@ -606,7 +606,7 @@ function initNoiseDashboard() {
         refreshNoiseDisplay();
     }, 3000);
 
-    console.log('Noise dashboard initialized');
+    console.info('Noise dashboard initialized');
 }
 
 // Update noise language
