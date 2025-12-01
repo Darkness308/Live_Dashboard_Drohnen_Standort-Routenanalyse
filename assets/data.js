@@ -138,7 +138,7 @@ const historicalNoiseData = {
   }
 };
 
-// Export data for use in other modules
+// Export data for use in other modules (Node.js)
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     fleetData,
@@ -148,4 +148,14 @@ if (typeof module !== 'undefined' && module.exports) {
     complianceData,
     historicalNoiseData
   };
+}
+
+// Make available in browser global scope
+if (typeof window !== 'undefined') {
+  window.fleetData = fleetData;
+  window.immissionsorte = immissionsorte;
+  window.routeData = routeData;
+  window.taLaermData = taLaermData;
+  window.complianceData = complianceData;
+  window.historicalNoiseData = historicalNoiseData;
 }
