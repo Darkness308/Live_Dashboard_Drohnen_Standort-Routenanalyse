@@ -530,7 +530,7 @@ function initFleetDashboard() {
         refreshFleetDisplay();
     }, 5000);
 
-    console.log('Fleet dashboard initialized');
+    console.info('Fleet dashboard initialized');
 }
 
 // Update fleet language
