@@ -28,19 +28,68 @@ Target users: Regulatory authorities (LBA), stakeholders, operational teams.
 ## Repository Structure
 
 ```
-Live_Dashboard_Drohnen_Standort-Routenanalyse/
-├── index.html              # Main dashboard HTML with responsive layout
+morpheus-dashboard/
+├── index.html              # Haupteinstiegspunkt
 ├── assets/
-│   ├── data.js            # Validated MORPHEUS data sources (GPS, SAIL III, compliance)
-│   ├── maps.js            # Google Maps API integration and interactivity
-│   ├── charts.js          # Chart.js visualizations for metrics and comparisons
-│   └── styles.css         # Custom CSS styles and theme variables
-├── .env.example           # Environment configuration template (API keys, features)
+│   ├── data.js            # Statische JSON-Daten (Standorte, Routen, Flotten)
+│   ├── maps.js            # Google Maps API-Integration
+│   ├── charts.js          # Chart.js-Visualisierungen
+│   └── styles.css         # Tailwind-Überschreibungen & benutzerdefinierte Stile
+├── .env.example           # API-Schlüsselvorlage (NICHT COMMITTEN!)
 ├── .gitignore            # Git ignore patterns for secrets and build artifacts
-├── LICENSE               # MIT License
-├── README.md             # Comprehensive project documentation
-└── AGENTS.md             # This file - Agent guidelines and project context
+├── LICENSE               # MIT-Lizenz
+├── README.md             # Lesbare Dokumentation
+└── AGENTS.md             # Diese Datei
 ```
+
+### File Responsibilities
+- **data.js:** Contains all validated GPS coordinates, fleet specs, TA Lärm thresholds
+- **maps.js:** Initializes Google Maps, draws routes, handles markers
+- **charts.js:** Renders noise impact charts, fleet statistics
+- **styles.css:** Custom utility classes for regulatory color coding
+
+---
+
+## Dependencies and Installation
+
+### Prerequisites
+- Node.js 18+ (for local dev server)
+- Google Cloud Platform account (Maps API key)
+- Modern browser (Chrome 100+, Firefox 100+, Safari 15+)
+
+### Installation Steps
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/Darkness308/Live_Dashboard_Drohnen_Standort-Routenanalyse.git
+   cd Live_Dashboard_Drohnen_Standort-Routenanalyse
+   ```
+
+2. **Configure Google Maps API:**
+   ```bash
+   cp .env.example .env
+   # Edit .env and add your Google Maps API key
+   ```
+
+3. **Start local development server:**
+   ```bash
+   # Option 1: Python
+   python -m http.server 8000
+   
+   # Option 2: Node.js
+   npx http-server -p 8000
+   ```
+
+4. **Open in browser:**
+   ```
+   http://localhost:8000
+   ```
+
+### Required APIs
+Ensure these APIs are enabled in Google Cloud Console:
+- Maps JavaScript API
+- Maps SDK for Android (optional for mobile)
+- Visualization Library (for heatmaps)
 
 ---
 
