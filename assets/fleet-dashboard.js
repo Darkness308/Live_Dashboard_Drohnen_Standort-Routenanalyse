@@ -64,9 +64,15 @@ function initFleetState() {
 
 // Generate random position near Berlin
 function generateRandomPosition() {
+    // Generate with 6 decimal places
+    const latBase = 52.450000;
+    const lngBase = 13.300000;
+    const latOffset = (Math.random() * 0.100000).toFixed(6);
+    const lngOffset = (Math.random() * 0.150000).toFixed(6);
+    
     return {
-        lat: 52.45 + Math.random() * 0.1,
-        lng: 13.30 + Math.random() * 0.15
+        lat: parseFloat((latBase + parseFloat(latOffset)).toFixed(6)),
+        lng: parseFloat((lngBase + parseFloat(lngOffset)).toFixed(6))
     };
 }
 
@@ -462,10 +468,12 @@ function updateFleetData() {
             // Decrease battery
             drone.battery = Math.max(10, drone.battery - Math.random() * 2);
 
-            // Update position
+            // Update position (ensure 6 decimal places)
             if (drone.currentPosition) {
-                drone.currentPosition.lat += (Math.random() - 0.5) * 0.005;
-                drone.currentPosition.lng += (Math.random() - 0.5) * 0.005;
+                const latChange = (Math.random() - 0.5) * 0.005000;
+                const lngChange = (Math.random() - 0.5) * 0.005000;
+                drone.currentPosition.lat = parseFloat((drone.currentPosition.lat + latChange).toFixed(6));
+                drone.currentPosition.lng = parseFloat((drone.currentPosition.lng + lngChange).toFixed(6));
             }
 
             // Check if arrived

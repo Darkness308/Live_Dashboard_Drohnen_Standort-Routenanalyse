@@ -1,0 +1,43 @@
+{
+  "name": "morpheus-dashboard",
+  "version": "1.0.0",
+  "description": "MORPHEUS Dashboard - Live Dashboard für Drohnen-Standort & Routenanalyse mit TA Lärm Compliance Visualisierung",
+  "main": "index.html",
+  "scripts": {
+    "lint:js": "eslint assets/*.js --config .eslintrc.json",
+    "lint:html": "html-validate index.html dashboard.html --config .htmlvalidate.json",
+    "lint:css": "stylelint \"assets/*.css\" --config .stylelintrc.json",
+    "lint": "npm run lint:js && npm run lint:html && npm run lint:css",
+    "validate:gps": "node scripts/validate-gps.js",
+    "validate:secrets": "node scripts/scan-secrets.js",
+    "validate": "npm run validate:gps && npm run validate:secrets",
+    "test": "npm run lint && npm run validate"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Darkness308/Live_Dashboard_Drohnen_Standort-Routenanalyse.git"
+  },
+  "keywords": [
+    "drone",
+    "dashboard",
+    "noise-analysis",
+    "ta-laerm",
+    "bvlos",
+    "morpheus",
+    "logistics"
+  ],
+  "author": "Darkness308",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.29.1",
+    "html-validate": "^8.11.1",
+    "stylelint": "^16.2.1",
+    "stylelint-config-standard": "^36.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}
