@@ -26,8 +26,8 @@ function validateGpsCoordinates(lat, lng) {
   const latStr = lat.toString();
   const lngStr = lng.toString();
   
-  // Handle scientific notation by checking if the string contains 'e'
-  if (latStr.includes('e') || lngStr.includes('e')) {
+  // Handle scientific notation by checking if the string contains 'e' or 'E'
+  if (latStr.toLowerCase().includes('e') || lngStr.toLowerCase().includes('e')) {
     console.error(`GPS validation failed: scientific notation not supported for lat=${lat}, lng=${lng}`);
     return false;
   }
@@ -144,7 +144,7 @@ function initRoutePolylines() {
   
   Object.entries(routeData).forEach(([key, route]) => {
     // Validate all waypoints before rendering
-    const validWaypoints = route.waypoints.filter(waypoint => {
+    const allValid = route.waypoints.every(waypoint => {
       const isValid = validateGpsCoordinates(waypoint.lat, waypoint.lng);
       if (!isValid) {
         console.warn(`Invalid waypoint in ${route.name}: lat=${waypoint.lat}, lng=${waypoint.lng}`);
@@ -153,7 +153,7 @@ function initRoutePolylines() {
     });
     
     // Only render route if all waypoints are valid
-    if (validWaypoints.length !== route.waypoints.length) {
+    if (!allValid) {
       console.error(`Route ${route.name} has invalid waypoints. Skipping rendering.`);
       return;
     }
