@@ -11,8 +11,9 @@
 }
 
 /* Smooth transitions */
-* {
-  transition: all 0.2s ease-in-out;
+/* Apply transitions selectively to interactive elements for performance */
+button, a, .dashboard-card, .toggle-slider {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
 /* Map container */

@@ -16,16 +16,16 @@ const fleetData = {
 
 // GPS Coordinates for Immissionsorte (Emission/Noise Measurement Points)
 const immissionsorte = [
-  { id: 1, lat: 52.5200, lng: 13.4050, name: "Berlin Zentrum", noiseLevel: 55, type: "residential" },
-  { id: 2, lat: 52.5170, lng: 13.3889, name: "Tiergarten", noiseLevel: 48, type: "park" },
-  { id: 3, lat: 52.5244, lng: 13.4105, name: "Alexanderplatz", noiseLevel: 62, type: "commercial" },
-  { id: 4, lat: 52.5194, lng: 13.4067, name: "Museum Island", noiseLevel: 52, type: "cultural" },
-  { id: 5, lat: 52.5163, lng: 13.3777, name: "Hauptbahnhof", noiseLevel: 58, type: "transport" },
-  { id: 6, lat: 52.5234, lng: 13.4144, name: "Rotes Rathaus", noiseLevel: 54, type: "government" },
-  { id: 7, lat: 52.5188, lng: 13.3764, name: "Reichstag", noiseLevel: 51, type: "government" },
-  { id: 8, lat: 52.5186, lng: 13.4081, name: "Hackescher Markt", noiseLevel: 60, type: "commercial" },
-  { id: 9, lat: 52.5139, lng: 13.4239, name: "Ostbahnhof", noiseLevel: 65, type: "transport" },
-  { id: 10, lat: 52.5095, lng: 13.3765, name: "Potsdamer Platz", noiseLevel: 59, type: "commercial" }
+  { id: 1, lat: 52.520000, lng: 13.405000, name: "Berlin Zentrum", noiseLevel: 55, type: "residential" },
+  { id: 2, lat: 52.517000, lng: 13.388900, name: "Tiergarten", noiseLevel: 48, type: "park" },
+  { id: 3, lat: 52.524400, lng: 13.410500, name: "Alexanderplatz", noiseLevel: 62, type: "commercial" },
+  { id: 4, lat: 52.519400, lng: 13.406700, name: "Museum Island", noiseLevel: 52, type: "cultural" },
+  { id: 5, lat: 52.516300, lng: 13.377700, name: "Hauptbahnhof", noiseLevel: 58, type: "transport" },
+  { id: 6, lat: 52.523400, lng: 13.414400, name: "Rotes Rathaus", noiseLevel: 54, type: "government" },
+  { id: 7, lat: 52.518800, lng: 13.376400, name: "Reichstag", noiseLevel: 51, type: "government" },
+  { id: 8, lat: 52.518600, lng: 13.408100, name: "Hackescher Markt", noiseLevel: 60, type: "commercial" },
+  { id: 9, lat: 52.513900, lng: 13.423900, name: "Ostbahnhof", noiseLevel: 65, type: "transport" },
+  { id: 10, lat: 52.509500, lng: 13.376500, name: "Potsdamer Platz", noiseLevel: 59, type: "commercial" }
 ];
 
 // Three Route Comparison Data (SAIL III validated routes)
@@ -39,11 +39,11 @@ const routeData = {
     energyConsumption: 75, // %
     taCompliance: true,
     waypoints: [
-      { lat: 52.5200, lng: 13.4050 },
-      { lat: 52.5220, lng: 13.4080 },
-      { lat: 52.5240, lng: 13.4110 },
-      { lat: 52.5260, lng: 13.4140 },
-      { lat: 52.5280, lng: 13.4170 }
+      { lat: 52.520000, lng: 13.405000 },
+      { lat: 52.522000, lng: 13.408000 },
+      { lat: 52.524000, lng: 13.411000 },
+      { lat: 52.526000, lng: 13.414000 },
+      { lat: 52.528000, lng: 13.417000 }
     ]
   },
   route2: {
@@ -55,11 +55,11 @@ const routeData = {
     energyConsumption: 82, // %
     taCompliance: true,
     waypoints: [
-      { lat: 52.5200, lng: 13.4050 },
-      { lat: 52.5210, lng: 13.4100 },
-      { lat: 52.5230, lng: 13.4130 },
-      { lat: 52.5250, lng: 13.4150 },
-      { lat: 52.5280, lng: 13.4170 }
+      { lat: 52.520000, lng: 13.405000 },
+      { lat: 52.521000, lng: 13.410000 },
+      { lat: 52.523000, lng: 13.413000 },
+      { lat: 52.525000, lng: 13.415000 },
+      { lat: 52.528000, lng: 13.417000 }
     ]
   },
   route3: {
@@ -71,11 +71,11 @@ const routeData = {
     energyConsumption: 68, // %
     taCompliance: true,
     waypoints: [
-      { lat: 52.5200, lng: 13.4050 },
-      { lat: 52.5190, lng: 13.4070 },
-      { lat: 52.5210, lng: 13.4120 },
-      { lat: 52.5240, lng: 13.4155 },
-      { lat: 52.5280, lng: 13.4170 }
+      { lat: 52.520000, lng: 13.405000 },
+      { lat: 52.519000, lng: 13.407000 },
+      { lat: 52.521000, lng: 13.412000 },
+      { lat: 52.524000, lng: 13.415500 },
+      { lat: 52.528000, lng: 13.417000 }
     ]
   }
 };

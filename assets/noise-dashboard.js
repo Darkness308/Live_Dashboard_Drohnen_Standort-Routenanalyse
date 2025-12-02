@@ -18,7 +18,7 @@ const taLaermLimits = {
     residential: { day: 55, night: 40, name_de: 'Wohngebiet', name_en: 'Residential' },
     mixed: { day: 60, night: 45, name_de: 'Mischgebiet', name_en: 'Mixed Use' },
     commercial: { day: 65, night: 50, name_de: 'Gewerbegebiet', name_en: 'Commercial' },
-    industrial: { day: 70, night: 55, name_de: 'Industriegebiet', name_en: 'Industrial' },
+    industrial: { day: 70, night: 70, name_de: 'Industriegebiet', name_en: 'Industrial' },
     hospital: { day: 50, night: 35, name_de: 'Krankenhaus', name_en: 'Hospital' },
     school: { day: 50, night: 35, name_de: 'Schule', name_en: 'School' },
     care_facility: { day: 50, night: 35, name_de: 'Pflegeeinrichtung', name_en: 'Care Facility' },
