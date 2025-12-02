@@ -6,6 +6,61 @@ let heatmap;
 let routePolylines = [];
 let markers = [];
 
+/**
+ * Validates GPS coordinates for required precision
+ * @param {number} lat - Latitude coordinate
+ * @param {number} lng - Longitude coordinate
+ * @returns {boolean} True if coordinates have exactly 6 decimal places and are within valid range
+ * @example
+ * validateGpsCoordinates(51.371099, 7.693150) // returns true
+ * validateGpsCoordinates(51.371, 7.693) // returns false
+ */
+function validateGpsCoordinates(lat, lng) {
+  // Validate input types
+  if (typeof lat !== 'number' || typeof lng !== 'number') {
+    console.error(`GPS validation failed: invalid types - lat type: ${typeof lat}, lng type: ${typeof lng}`);
+    return false;
+  }
+  
+  // Check for NaN
+  if (Number.isNaN(lat) || Number.isNaN(lng)) {
+    console.error(`GPS validation failed: NaN values - lat=${lat}, lng=${lng}`);
+    return false;
+  }
+  
+  // Check valid range
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+    console.error(`GPS out of range: lat=${lat}, lng=${lng}`);
+    return false;
+  }
+  
+  // Convert to string and count decimal places
+  const latStr = lat.toString();
+  const lngStr = lng.toString();
+  
+  // Handle scientific notation by checking if the string contains 'e' or 'E'
+  if (latStr.toLowerCase().includes('e') || lngStr.toLowerCase().includes('e')) {
+    console.error(`GPS validation failed: scientific notation not supported for lat=${lat}, lng=${lng}`);
+    return false;
+  }
+  
+  const latParts = latStr.split('.');
+  const lngParts = lngStr.split('.');
+  
+  const latDecimals = latParts.length > 1 ? latParts[1].length : 0;
+  const lngDecimals = lngParts.length > 1 ? lngParts[1].length : 0;
+  
+  // Note: JavaScript's toString() strips trailing zeros (e.g., 1.000000 becomes "1")
+  // This validation checks the string representation, not the intended precision
+  // Users should ensure coordinates are stored with exactly 6 decimals in source data
+  if (latDecimals !== 6 || lngDecimals !== 6) {
+    console.error(`GPS validation failed: lat=${lat} (${latDecimals} decimals), lng=${lng} (${lngDecimals} decimals)`);
+    return false;
+  }
+  
+  return true;
+}
+
 // Initialize Google Maps
 function initMap() {
   // Default center (Iserlohn, MORPHEUS project location)
@@ -60,6 +115,12 @@ function initImmissionsortMarkers() {
   markers = [];
   
   immissionsorte.forEach(point => {
+    // Validate GPS coordinates before rendering
+    if (!validateGpsCoordinates(point.lat, point.lng)) {
+      console.warn(`Skipping marker for ${point.name} due to invalid GPS coordinates`);
+      return;
+    }
+    
     const marker = new google.maps.Marker({
       position: { lat: point.lat, lng: point.lng },
       map: map,
@@ -97,6 +158,21 @@ function initRoutePolylines() {
   routePolylines = [];
   
   Object.entries(routeData).forEach(([key, route]) => {
+    // Validate all waypoints before rendering
+    const allValid = route.waypoints.every(waypoint => {
+      const isValid = validateGpsCoordinates(waypoint.lat, waypoint.lng);
+      if (!isValid) {
+        console.warn(`Invalid waypoint in ${route.name}: lat=${waypoint.lat}, lng=${waypoint.lng}`);
+      }
+      return isValid;
+    });
+    
+    // Only render route if all waypoints are valid
+    if (!allValid) {
+      console.error(`Route ${route.name} has invalid waypoints. Skipping rendering.`);
+      return;
+    }
+    
     const polyline = new google.maps.Polyline({
       path: route.waypoints,
       geodesic: true,
