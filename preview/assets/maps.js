@@ -16,7 +16,19 @@ let markers = [];
  * validateGpsCoordinates(51.371, 7.693) // returns false
  */
 function validateGpsCoordinates(lat, lng) {
-  // Check valid range first
+  // Validate input types
+  if (typeof lat !== 'number' || typeof lng !== 'number') {
+    console.error(`GPS validation failed: invalid types - lat type: ${typeof lat}, lng type: ${typeof lng}`);
+    return false;
+  }
+  
+  // Check for NaN
+  if (Number.isNaN(lat) || Number.isNaN(lng)) {
+    console.error(`GPS validation failed: NaN values - lat=${lat}, lng=${lng}`);
+    return false;
+  }
+  
+  // Check valid range
   if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
     console.error(`GPS out of range: lat=${lat}, lng=${lng}`);
     return false;
@@ -38,6 +50,9 @@ function validateGpsCoordinates(lat, lng) {
   const latDecimals = latParts.length > 1 ? latParts[1].length : 0;
   const lngDecimals = lngParts.length > 1 ? lngParts[1].length : 0;
   
+  // Note: JavaScript's toString() strips trailing zeros (e.g., 1.000000 becomes "1")
+  // This validation checks the string representation, not the intended precision
+  // Users should ensure coordinates are stored with exactly 6 decimals in source data
   if (latDecimals !== 6 || lngDecimals !== 6) {
     console.error(`GPS validation failed: lat=${lat} (${latDecimals} decimals), lng=${lng} (${lngDecimals} decimals)`);
     return false;
