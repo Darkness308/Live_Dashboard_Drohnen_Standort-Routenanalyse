@@ -312,38 +312,96 @@
 
     <!-- Google Maps JavaScript API -->
     <script>
-        // Load Google Maps API with your API key
-        // IMPORTANT SECURITY NOTE: In production, the API key should be loaded server-side
-        // or restricted by domain/referrer in Google Cloud Console to prevent unauthorized use.
-        // This client-side implementation is for demonstration purposes.
-        // For production use, consider:
-        // 1. Setting up domain restrictions in Google Cloud Console
-        // 2. Using a backend proxy to hide the API key
-        // 3. Implementing request limits and monitoring
-        const GOOGLE_MAPS_API_KEY = 'YOUR_API_KEY'; // Replace with your API key (with domain restrictions)
+        // Load Google Maps API key from environment variables or localStorage
+        // Following project security guidelines (CodingGuidelineID: 1000000)
+        // IMPORTANT SECURITY NOTE: In production, the API key should be:
+        // 1. Restricted by domain/referrer in Google Cloud Console
+        // 2. Loaded from environment variables or secure backend proxy
+        // 3. Protected with request limits and monitoring
         
+        /**
+         * Loads Google Maps API key following security best practices
+         * @returns {string} Google Maps API key
+         * @throws {Error} If no valid API key is configured
+         * 
+         * NOTE: This is a client-side implementation. For production use:
+         * - Use domain restrictions in Google Cloud Console
+         * - Consider a backend proxy to hide the API key
+         * - Be aware that client-side keys are always visible in browser
+         */
+        function getGoogleMapsApiKey() {
+            // Try to load from environment variable (if using build process that injects env vars)
+            // Note: This only works with build tools that replace process.env at build time
+            let apiKey = typeof process !== 'undefined' && process.env ? process.env.GOOGLE_MAPS_API_KEY : null;
+            
+            // Fallback to localStorage (can be set by deployment script or user)
+            // Note: localStorage is vulnerable to XSS. Ensure domain restrictions on API key.
+            if (!apiKey) {
+                apiKey = localStorage.getItem('GOOGLE_MAPS_API_KEY');
+            }
+            
+            // Fallback to prompt user for API key
+            // Note: Only for development/demo. Remove for production.
+            if (!apiKey) {
+                apiKey = prompt('Please enter your Google Maps API key:');
+                if (apiKey && apiKey.trim()) {
+                    // Save to localStorage for future use
+                    localStorage.setItem('GOOGLE_MAPS_API_KEY', apiKey.trim());
+                    apiKey = apiKey.trim();
+                }
+            }
+            
+            return apiKey;
+        }
+        
+        // Get API key using secure loading method
+        const GOOGLE_MAPS_API_KEY = getGoogleMapsApiKey();
+        
+        // Validate that a proper API key is configured
+        if (!GOOGLE_MAPS_API_KEY || GOOGLE_MAPS_API_KEY === 'YOUR_API_KEY' || GOOGLE_MAPS_API_KEY === 'your_google_maps_api_key_here') {
+            const errorMsg = 'Valid Google Maps API key required. Set via localStorage.setItem("GOOGLE_MAPS_API_KEY", "your-key")';
+            console.error(errorMsg);
+            document.getElementById('map').innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f3f4f6; border-radius: 0.5rem;">
+                    <div style="text-align: center; padding: 2rem;">
+                        <p style="color: #374151; font-weight: 600; margin-bottom: 0.5rem;">⚠️ Google Maps API Key Required</p>
+                        <p style="color: #6b7280; font-size: 0.875rem;">Please configure your Google Maps API key.</p>
+                        <p style="color: #6b7280; font-size: 0.875rem; margin-top: 0.5rem;">Set it in localStorage:</p>
+                        <code style="background: #e5e7eb; padding: 0.5rem; display: block; margin: 0.5rem 0; border-radius: 0.25rem; font-size: 0.75rem;">localStorage.setItem('GOOGLE_MAPS_API_KEY', 'your-key')</code>
+                        <p style="color: #6b7280; font-size: 0.875rem;">See README.md for instructions.</p>
+                        <button onclick="location.reload()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #3B82F6; color: white; border-radius: 0.375rem; border: none; cursor: pointer;">
+                            Retry
+                        </button>
+                    </div>
+                </div>
+            `;
+            throw new Error(errorMsg);
+        }
+        
+        /**
+         * Loads Google Maps JavaScript API with configured API key
+         */
         function loadGoogleMapsAPI() {
             const script = document.createElement('script');
             script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=visualization&callback=initMap`;
             script.async = true;
             script.defer = true;
+            script.onerror = () => {
+                console.error('Failed to load Google Maps API. Check your API key and network connection.');
+                document.getElementById('map').innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #fee; border-radius: 0.5rem;">
+                        <div style="text-align: center; padding: 2rem;">
+                            <p style="color: #991b1b; font-weight: 600; margin-bottom: 0.5rem;">❌ Failed to Load Google Maps</p>
+                            <p style="color: #7f1d1d; font-size: 0.875rem;">Check your API key and network connection.</p>
+                        </div>
+                    </div>
+                `;
+            };
             document.head.appendChild(script);
         }
         
-        // Show message if API key is not configured
-        if (GOOGLE_MAPS_API_KEY === 'YOUR_API_KEY') {
-            document.getElementById('map').innerHTML = `
-                <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f3f4f6; border-radius: 0.5rem;">
-                    <div style="text-align: center; padding: 2rem;">
-                        <p style="color: #374151; font-weight: 600; margin-bottom: 0.5rem;">⚠️ Google Maps API Key Required</p>
-                        <p style="color: #6b7280; font-size: 0.875rem;">Please configure your Google Maps API key in the .env file.</p>
-                        <p style="color: #6b7280; font-size: 0.875rem;">See README.md for instructions.</p>
-                    </div>
-                </div>
-            `;
-        } else {
-            loadGoogleMapsAPI();
-        }
+        // Load Google Maps API with validated key
+        loadGoogleMapsAPI();
     </script>
 
     <!-- Load data and modules -->

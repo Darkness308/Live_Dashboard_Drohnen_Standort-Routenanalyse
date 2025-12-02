@@ -99,7 +99,7 @@ async function initLeafletMap() {
 
     // Create map centered on Berlin (Eurofins Lab area)
     leafletMap = L.map('leaflet-map', {
-        center: [52.4800, 13.3500],
+        center: [52.480000, 13.350000],
         zoom: 13,
         zoomControl: true,
         attributionControl: true
