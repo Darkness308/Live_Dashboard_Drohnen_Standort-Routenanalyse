@@ -93,7 +93,7 @@ const taLaermData = {
     },
     industrial: {
       day: 70,
-      night: 55
+      night: 70
     }
   },
   measurements: [
