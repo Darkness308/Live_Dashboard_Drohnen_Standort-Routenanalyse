@@ -1,0 +1,340 @@
+/* MORPHEUS Dashboard - Custom Styles */
+/* Additional styling beyond Tailwind CSS */
+
+:root {
+  --primary-color: #3B82F6;
+  --secondary-color: #10B981;
+  --danger-color: #EF4444;
+  --warning-color: #F59E0B;
+  --dark-bg: #1F2937;
+  --light-bg: #F9FAFB;
+}
+
+/* Smooth transitions */
+/* Apply transitions selectively to interactive elements for performance */
+button, a, .dashboard-card, .toggle-slider {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+/* Map container */
+#map {
+  width: 100%;
+  height: 600px;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+@media (max-width: 768px) {
+  #map {
+    height: 400px;
+  }
+}
+
+/* Chart containers */
+.chart-container {
+  position: relative;
+  height: 300px;
+  width: 100%;
+}
+
+/* Card hover effects */
+.dashboard-card {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Status badges */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.status-badge.success {
+  background-color: #D1FAE5;
+  color: #065F46;
+}
+
+.status-badge.warning {
+  background-color: #FEF3C7;
+  color: #92400E;
+}
+
+.status-badge.danger {
+  background-color: #FEE2E2;
+  color: #991B1B;
+}
+
+.status-badge.info {
+  background-color: #DBEAFE;
+  color: #1E40AF;
+}
+
+/* Loading animation */
+.loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(59, 130, 246, 0.3);
+  border-radius: 50%;
+  border-top-color: #3B82F6;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Toggle switch styling */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 24px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #CBD5E1;
+  border-radius: 24px;
+  transition: 0.3s;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: 0.3s;
+}
+
+input:checked + .toggle-slider {
+  background-color: #3B82F6;
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(24px);
+}
+
+input:focus + .toggle-slider {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* Route info table */
+.route-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.route-table th,
+.route-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.route-table th {
+  background-color: #F9FAFB;
+  font-weight: 600;
+  color: #374151;
+}
+
+.route-table tbody tr:hover {
+  background-color: #F9FAFB;
+}
+
+/* Metric cards */
+.metric-card {
+  text-align: center;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.metric-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1F2937;
+  margin: 0.5rem 0;
+}
+
+.metric-label {
+  font-size: 0.875rem;
+  color: #6B7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.metric-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Accessibility improvements */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Focus styles for keyboard navigation */
+a:focus,
+button:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid #3B82F6;
+  outline-offset: 2px;
+}
+
+/* Skip to main content link */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #3B82F6;
+  color: white;
+  padding: 8px;
+  text-decoration: none;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .dashboard-card {
+    border: 2px solid #000;
+  }
+  
+  .status-badge {
+    border: 1px solid currentColor;
+  }
+}
+
+/* Reduced motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  #map {
+    height: 400px;
+  }
+  
+  .chart-container {
+    page-break-inside: avoid;
+  }
+}
+
+/* Dark mode support (optional) */
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #111827;
+    color: #F9FAFB;
+  }
+  
+  .dashboard-card {
+    background-color: #1F2937;
+    color: #F9FAFB;
+  }
+  
+  .route-table th {
+    background-color: #374151;
+    color: #F9FAFB;
+  }
+  
+  .route-table tbody tr:hover {
+    background-color: #374151;
+  }
+}
+
+/* Responsive grid improvements */
+@media (max-width: 640px) {
+  .metric-value {
+    font-size: 1.5rem;
+  }
+  
+  .route-table {
+    font-size: 0.875rem;
+  }
+  
+  .route-table th,
+  .route-table td {
+    padding: 0.5rem;
+  }
+}
+
+/* Animation for compliance status */
+.compliance-indicator {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+}
+
+.compliance-indicator.compliant {
+  background-color: #10B981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+}
+
+.compliance-indicator.warning {
+  background-color: #F59E0B;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+}
+
+.compliance-indicator.non-compliant {
+  background-color: #EF4444;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
