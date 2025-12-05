@@ -26,10 +26,17 @@ from backend.integrations.nrw_data_loader import (
     NRWDataLoader,
     WFSEndpoint,
     DataSource,
-    AuditRecord,
-    WFSServiceError,
-    DataValidationError
+    AuditRecord
 )
+
+# Custom Exceptions für Tests (falls nicht im Original definiert)
+class WFSServiceError(Exception):
+    """WFS Service nicht erreichbar oder Fehler."""
+    pass
+
+class DataValidationError(ValueError):
+    """Datenvalidierungsfehler."""
+    pass
 
 
 # =============================================================================

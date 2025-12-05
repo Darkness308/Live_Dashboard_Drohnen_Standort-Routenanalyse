@@ -18,26 +18,44 @@ from datetime import datetime
 from enum import Enum
 import logging
 
-# Lokale Imports
-from backend.calculations.iso9613 import (
-    ISO9613Calculator,
-    NoiseSource,
-    Receiver,
-    WeatherConditions,
-    Obstacle,
-    TALaermChecker,
-    GroundType
-)
-from backend.integrations.nrw_data_loader import NRWDataLoader, DataSource
-from backend.models.schemas import (
-    NoiseCalculationRequest,
-    NoiseCalculationResponse,
-    GridCalculationRequest,
-    TALaermComplianceRequest,
-    TALaermComplianceResponse,
-    BoundingBox,
-    GeoJSONResponse
-)
+# Lokale Imports - relative Imports für Backend-Modul
+try:
+    from calculations.iso9613 import (
+        ISO9613Calculator,
+        NoiseSource,
+        Receiver,
+        WeatherConditions,
+        Obstacle,
+        TALaermChecker,
+        GroundType
+    )
+    from integrations.nrw_data_loader import NRWDataLoader, DataSource
+except ImportError:
+    # Fallback für absolute Imports
+    from backend.calculations.iso9613 import (
+        ISO9613Calculator,
+        NoiseSource,
+        Receiver,
+        WeatherConditions,
+        Obstacle,
+        TALaermChecker,
+        GroundType
+    )
+    from backend.integrations.nrw_data_loader import NRWDataLoader, DataSource
+
+# Optional: Pydantic Schemas (werden inline definiert falls nicht vorhanden)
+try:
+    from models.schemas import (
+        NoiseCalculationRequest,
+        NoiseCalculationResponse,
+        GridCalculationRequest,
+        TALaermComplianceRequest,
+        TALaermComplianceResponse,
+        BoundingBox,
+        GeoJSONResponse
+    )
+except ImportError:
+    pass  # Verwende inline-definierte Models
 
 logger = logging.getLogger(__name__)
 
@@ -439,7 +457,7 @@ async def check_ta_laerm_compliance(request: TALaermCheckInput):
     Prüft TA Lärm Compliance für gegebenen Pegel und Gebietstyp.
     """
     result = TALaermChecker.check_compliance(
-        noise_level_dba=request.noise_level_dba,
+        spl=request.noise_level_dba,
         zone_type=request.zone_type.value,
         is_night=request.is_night
     )
