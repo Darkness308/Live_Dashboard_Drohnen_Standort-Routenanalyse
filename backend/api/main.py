@@ -25,8 +25,7 @@ from .routes import router as api_router
 
 # Logger konfigurieren
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -88,7 +87,7 @@ Diese API bietet Zugriff auf:
     lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc",
-    openapi_url="/openapi.json"
+    openapi_url="/openapi.json",
 )
 
 
@@ -137,6 +136,7 @@ app.include_router(api_router, prefix="/api/v1")
 # Root & Health Endpoints
 # =============================================================================
 
+
 @app.get("/", tags=["Root"])
 async def root():
     """
@@ -147,7 +147,7 @@ async def root():
         "version": "1.0.0",
         "description": "Gerichtsfeste Drohnen-Lärmanalyse API",
         "documentation": "/docs",
-        "health": "/health"
+        "health": "/health",
     }
 
 
@@ -163,11 +163,7 @@ async def health_check():
     return {
         "status": "healthy",
         "timestamp": time.time(),
-        "services": {
-            "api": "up",
-            "iso9613": "up",
-            "wfs_loader": "up"
-        }
+        "services": {"api": "up", "iso9613": "up", "wfs_loader": "up"},
     }
 
 
@@ -197,6 +193,7 @@ async def liveness_check():
 # Exception Handlers
 # =============================================================================
 
+
 @app.exception_handler(ValueError)
 async def value_error_handler(request: Request, exc: ValueError):
     """Handler für ValueError (z.B. ungültige Eingaben)."""
@@ -206,8 +203,8 @@ async def value_error_handler(request: Request, exc: ValueError):
         content={
             "error": "Invalid input",
             "detail": str(exc),
-            "path": request.url.path
-        }
+            "path": request.url.path,
+        },
     )
 
 
@@ -220,14 +217,15 @@ async def general_exception_handler(request: Request, exc: Exception):
         content={
             "error": "Internal server error",
             "detail": "An unexpected error occurred. Please check the logs.",
-            "path": request.url.path
-        }
+            "path": request.url.path,
+        },
     )
 
 
 # =============================================================================
 # Custom OpenAPI Schema
 # =============================================================================
+
 
 def custom_openapi():
     """Generiert benutzerdefiniertes OpenAPI-Schema."""
@@ -245,20 +243,17 @@ def custom_openapi():
     openapi_schema["tags"] = [
         {
             "name": "Noise Calculation",
-            "description": "ISO 9613-2 Schallausbreitungsberechnung und TA Lärm Compliance"
+            "description": "ISO 9613-2 Schallausbreitungsberechnung und TA Lärm Compliance",
         },
         {
             "name": "Geodata",
-            "description": "Geoportal NRW WFS Integration (ALKIS, Lärmkartierung)"
+            "description": "Geoportal NRW WFS Integration (ALKIS, Lärmkartierung)",
         },
         {
             "name": "Audit",
-            "description": "Gerichtsfeste Protokollierung und Audit-Trail"
+            "description": "Gerichtsfeste Protokollierung und Audit-Trail",
         },
-        {
-            "name": "Health",
-            "description": "Health-Checks für Monitoring"
-        }
+        {"name": "Health", "description": "Health-Checks für Monitoring"},
     ]
 
     app.openapi_schema = openapi_schema
@@ -274,10 +269,7 @@ app.openapi = custom_openapi
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
-        "backend.api.main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-        log_level="info"
+        "backend.api.main:app", host="0.0.0.0", port=8000, reload=True, log_level="info"
     )

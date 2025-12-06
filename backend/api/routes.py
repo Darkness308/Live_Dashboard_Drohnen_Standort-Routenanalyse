@@ -26,7 +26,7 @@ try:
         Receiver,
         WeatherConditions,
         TALaermChecker,
-        GroundType
+        GroundType,
     )
     from integrations.nrw_data_loader import NRWDataLoader
 except ImportError:
@@ -37,25 +37,23 @@ except ImportError:
         Receiver,
         WeatherConditions,
         TALaermChecker,
-        GroundType
+        GroundType,
     )
     from backend.integrations.nrw_data_loader import NRWDataLoader
 
 # Optional: Pydantic Schemas (werden inline definiert falls nicht vorhanden)
-# NOTE: These imports are commented out as they are not currently used.
-# Schemas are defined inline below. Uncomment if external schemas are needed.
-# try:
-#     from models.schemas import (
-#         NoiseCalculationRequest,
-#         NoiseCalculationResponse,
-#         GridCalculationRequest,
-#         TALaermComplianceRequest,
-#         TALaermComplianceResponse,
-#         BoundingBox,
-#         GeoJSONResponse
-#     )
-# except ImportError:
-#     pass  # Verwende inline-definierte Models
+try:
+    from models.schemas import (
+        NoiseCalculationRequest,
+        NoiseCalculationResponse,
+        GridCalculationRequest,
+        TALaermComplianceRequest,
+        TALaermComplianceResponse,
+        BoundingBox,
+        GeoJSONResponse,
+    )
+except ImportError:
+    pass  # Verwende inline-definierte Models
 
 logger = logging.getLogger(__name__)
 
@@ -66,8 +64,10 @@ router = APIRouter()
 # Pydantic Models für API
 # =============================================================================
 
+
 class GroundTypeEnum(str, Enum):
     """Bodentyp für Lärmberechnung."""
+
     HARD = "hard"
     SOFT = "soft"
     MIXED = "mixed"
@@ -75,6 +75,7 @@ class GroundTypeEnum(str, Enum):
 
 class ZoneTypeEnum(str, Enum):
     """TA Lärm Gebietstypen."""
+
     INDUSTRIEGEBIET = "industriegebiet"
     GEWERBEGEBIET = "gewerbegebiet"
     KERNGEBIET = "kerngebiet"
@@ -87,7 +88,10 @@ class ZoneTypeEnum(str, Enum):
 
 class NoiseSourceInput(BaseModel):
     """Schallquelle (Drohne) für API-Request."""
-    lw_dba: float = Field(..., ge=50, le=120, description="Schallleistungspegel in dB(A)")
+
+    lw_dba: float = Field(
+        ..., ge=50, le=120, description="Schallleistungspegel in dB(A)"
+    )
     x: float = Field(..., description="X-Koordinate (m)")
     y: float = Field(..., description="Y-Koordinate (m)")
     z: float = Field(..., ge=0, le=500, description="Höhe über Grund (m)")
@@ -102,13 +106,14 @@ class NoiseSourceInput(BaseModel):
                 "y": 0,
                 "z": 50,
                 "name": "Auriol X5",
-                "directivity": 0.0
+                "directivity": 0.0,
             }
         }
 
 
 class ReceiverInput(BaseModel):
     """Empfänger (Immissionsort) für API-Request."""
+
     x: float = Field(..., description="X-Koordinate (m)")
     y: float = Field(..., description="Y-Koordinate (m)")
     z: float = Field(4.0, ge=0, le=100, description="Höhe über Grund (m)")
@@ -122,29 +127,37 @@ class ReceiverInput(BaseModel):
                 "y": 0,
                 "z": 4.0,
                 "name": "Wohngebiet Friedenau",
-                "ground_type": "mixed"
+                "ground_type": "mixed",
             }
         }
 
 
 class WeatherInput(BaseModel):
     """Wetterbedingungen für Berechnung."""
-    temperature_celsius: float = Field(15.0, ge=-40, le=50, description="Temperatur (°C)")
-    relative_humidity_percent: float = Field(70.0, ge=0, le=100, description="Rel. Luftfeuchtigkeit (%)")
-    atmospheric_pressure_hpa: float = Field(1013.25, ge=900, le=1100, description="Luftdruck (hPa)")
+
+    temperature_celsius: float = Field(
+        15.0, ge=-40, le=50, description="Temperatur (°C)"
+    )
+    relative_humidity_percent: float = Field(
+        70.0, ge=0, le=100, description="Rel. Luftfeuchtigkeit (%)"
+    )
+    atmospheric_pressure_hpa: float = Field(
+        1013.25, ge=900, le=1100, description="Luftdruck (hPa)"
+    )
 
     class Config:
         json_schema_extra = {
             "example": {
                 "temperature_celsius": 20.0,
                 "relative_humidity_percent": 70.0,
-                "atmospheric_pressure_hpa": 1013.25
+                "atmospheric_pressure_hpa": 1013.25,
             }
         }
 
 
 class SingleCalculationRequest(BaseModel):
     """Request für einzelne Lärmberechnung."""
+
     source: NoiseSourceInput
     receiver: ReceiverInput
     weather: Optional[WeatherInput] = None
@@ -158,21 +171,22 @@ class SingleCalculationRequest(BaseModel):
                     "x": 0,
                     "y": 0,
                     "z": 50,
-                    "name": "Auriol X5"
+                    "name": "Auriol X5",
                 },
                 "receiver": {
                     "x": 100,
                     "y": 0,
                     "z": 4.0,
                     "name": "Wohngebiet",
-                    "ground_type": "soft"
-                }
+                    "ground_type": "soft",
+                },
             }
         }
 
 
 class CalculationResultResponse(BaseModel):
     """Response für Lärmberechnung."""
+
     source_lw_dba: float
     receiver_name: str
     distance_m: float
@@ -186,6 +200,7 @@ class CalculationResultResponse(BaseModel):
 
 class GridCalculationInput(BaseModel):
     """Request für Rasterberechnung."""
+
     source: NoiseSourceInput
     bbox: Tuple[float, float, float, float] = Field(
         ..., description="BoundingBox (xmin, ymin, xmax, ymax)"
@@ -194,7 +209,7 @@ class GridCalculationInput(BaseModel):
     receiver_height_m: float = Field(4.0, ge=0, le=50, description="Empfängerhöhe")
     weather: Optional[WeatherInput] = None
 
-    @validator('bbox')
+    @validator("bbox")
     def validate_bbox(cls, v):
         xmin, ymin, xmax, ymax = v
         if xmin >= xmax or ymin >= ymax:
@@ -206,6 +221,7 @@ class GridCalculationInput(BaseModel):
 
 class GridResultResponse(BaseModel):
     """Response für Rasterberechnung."""
+
     source_name: str
     grid_size_m: int
     total_points: int
@@ -218,7 +234,10 @@ class GridResultResponse(BaseModel):
 
 class TALaermCheckInput(BaseModel):
     """Request für TA Lärm Compliance-Check."""
-    noise_level_dba: float = Field(..., ge=0, le=150, description="Berechneter/gemessener Pegel")
+
+    noise_level_dba: float = Field(
+        ..., ge=0, le=150, description="Berechneter/gemessener Pegel"
+    )
     zone_type: ZoneTypeEnum = Field(..., description="Gebietstyp nach TA Lärm")
     is_night: bool = Field(False, description="Nachtzeit (22:00-06:00)")
 
@@ -227,13 +246,14 @@ class TALaermCheckInput(BaseModel):
             "example": {
                 "noise_level_dba": 52.0,
                 "zone_type": "allgemeines_wohngebiet",
-                "is_night": False
+                "is_night": False,
             }
         }
 
 
 class TALaermResultResponse(BaseModel):
     """Response für TA Lärm Compliance-Check."""
+
     noise_level_dba: float
     zone_type: str
     time_period: str
@@ -246,21 +266,22 @@ class TALaermResultResponse(BaseModel):
 
 class BBoxInput(BaseModel):
     """BoundingBox für Geodaten-Abfrage."""
+
     xmin: float = Field(..., description="Minimum X (Longitude)")
     ymin: float = Field(..., description="Minimum Y (Latitude)")
     xmax: float = Field(..., description="Maximum X (Longitude)")
     ymax: float = Field(..., description="Maximum Y (Latitude)")
     srs: str = Field("EPSG:4326", description="Koordinatenreferenzsystem")
 
-    @validator('xmax')
+    @validator("xmax")
     def validate_xmax(cls, v, values):
-        if 'xmin' in values and v <= values['xmin']:
+        if "xmin" in values and v <= values["xmin"]:
             raise ValueError("xmax muss größer als xmin sein")
         return v
 
-    @validator('ymax')
+    @validator("ymax")
     def validate_ymax(cls, v, values):
-        if 'ymin' in values and v <= values['ymin']:
+        if "ymin" in values and v <= values["ymin"]:
             raise ValueError("ymax muss größer als ymin sein")
         return v
 
@@ -268,6 +289,7 @@ class BBoxInput(BaseModel):
 # =============================================================================
 # Dependencies
 # =============================================================================
+
 
 def get_calculator() -> ISO9613Calculator:
     """Dependency: ISO9613 Calculator."""
@@ -282,6 +304,7 @@ def get_data_loader() -> NRWDataLoader:
 # =============================================================================
 # Noise Calculation Endpoints
 # =============================================================================
+
 
 @router.post(
     "/calculate/noise",
@@ -298,11 +321,11 @@ def get_data_loader() -> NRWDataLoader:
     - Abar: Abschirmung (falls Hindernisse angegeben)
 
     **Formel:** LAT = LW + Dc - A
-    """
+    """,
 )
 async def calculate_noise(
     request: SingleCalculationRequest,
-    calculator: ISO9613Calculator = Depends(get_calculator)
+    calculator: ISO9613Calculator = Depends(get_calculator),
 ):
     """
     Berechnet Schallpegel für einzelne Quelle-Empfänger-Kombination.
@@ -315,21 +338,21 @@ async def calculate_noise(
             y=request.source.y,
             z=request.source.z,
             name=request.source.name,
-            directivity=request.source.directivity
+            directivity=request.source.directivity,
         )
 
         # Receiver erstellen
         ground_type_map = {
             GroundTypeEnum.HARD: GroundType.HARD,
             GroundTypeEnum.SOFT: GroundType.SOFT,
-            GroundTypeEnum.MIXED: GroundType.MIXED
+            GroundTypeEnum.MIXED: GroundType.MIXED,
         }
         receiver = Receiver(
             x=request.receiver.x,
             y=request.receiver.y,
             z=request.receiver.z,
             name=request.receiver.name,
-            ground_type=ground_type_map[request.receiver.ground_type]
+            ground_type=ground_type_map[request.receiver.ground_type],
         )
 
         # Weather (optional)
@@ -337,15 +360,13 @@ async def calculate_noise(
             weather = WeatherConditions(
                 temperature_celsius=request.weather.temperature_celsius,
                 relative_humidity_percent=request.weather.relative_humidity_percent,
-                atmospheric_pressure_hpa=request.weather.atmospheric_pressure_hpa
+                atmospheric_pressure_hpa=request.weather.atmospheric_pressure_hpa,
             )
             calculator = ISO9613Calculator(weather=weather)
 
         # Berechnung durchführen
         result = calculator.calculate(
-            source,
-            receiver,
-            use_octave_bands=request.use_octave_bands
+            source, receiver, use_octave_bands=request.use_octave_bands
         )
 
         return CalculationResultResponse(
@@ -357,13 +378,13 @@ async def calculate_noise(
                 "a_atm_db": result.a_atm,
                 "a_gr_db": result.a_gr,
                 "a_bar_db": result.a_bar,
-                "a_misc_db": result.a_misc
+                "a_misc_db": result.a_misc,
             },
             total_attenuation_db=result.total_attenuation,
             sound_pressure_level_dba=result.sound_pressure_level,
             calculation_method=result.calculation_method,
             notes=result.notes,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
     except Exception as e:
@@ -385,11 +406,11 @@ async def calculate_noise(
     - receiver_height_m: Höhe der virtuellen Empfänger
 
     **Ausgabe:** Liste von Punkten mit (x, y, spl_dba)
-    """
+    """,
 )
 async def calculate_grid(
     request: GridCalculationInput,
-    calculator: ISO9613Calculator = Depends(get_calculator)
+    calculator: ISO9613Calculator = Depends(get_calculator),
 ):
     """
     Berechnet Lärmraster für Visualisierung.
@@ -401,7 +422,7 @@ async def calculate_grid(
             x=request.source.x,
             y=request.source.y,
             z=request.source.z,
-            name=request.source.name
+            name=request.source.name,
         )
 
         # Grid berechnen
@@ -409,11 +430,11 @@ async def calculate_grid(
             source=source,
             bbox=request.bbox,
             grid_size=request.grid_size_m,
-            receiver_height=request.receiver_height_m
+            receiver_height=request.receiver_height_m,
         )
 
         # Statistiken
-        spls = [r['spl_dba'] for r in results]
+        spls = [r["spl_dba"] for r in results]
 
         return GridResultResponse(
             source_name=request.source.name or "Drohne",
@@ -423,7 +444,7 @@ async def calculate_grid(
             max_spl_dba=max(spls) if spls else 0,
             avg_spl_dba=sum(spls) / len(spls) if spls else 0,
             grid_data=results,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
     except Exception as e:
@@ -434,6 +455,7 @@ async def calculate_grid(
 # =============================================================================
 # TA Lärm Compliance Endpoints
 # =============================================================================
+
 
 @router.post(
     "/compliance/check",
@@ -450,7 +472,7 @@ async def calculate_grid(
     - Allg. Wohngebiet: 55 / 40 dB(A)
     - Reines Wohngebiet: 50 / 35 dB(A)
     - Kurgebiet/Krankenhaus: 45 / 35 dB(A)
-    """
+    """,
 )
 async def check_ta_laerm_compliance(request: TALaermCheckInput):
     """
@@ -459,7 +481,7 @@ async def check_ta_laerm_compliance(request: TALaermCheckInput):
     result = TALaermChecker.check_compliance(
         spl=request.noise_level_dba,
         zone_type=request.zone_type.value,
-        is_night=request.is_night
+        is_night=request.is_night,
     )
 
     return TALaermResultResponse(
@@ -470,7 +492,7 @@ async def check_ta_laerm_compliance(request: TALaermCheckInput):
         margin_db=result["margin_db"],
         compliant=result["compliant"],
         status=result["status"],
-        reference="TA Lärm 1998, Nr. 6.1"
+        reference="TA Lärm 1998, Nr. 6.1",
     )
 
 
@@ -478,7 +500,7 @@ async def check_ta_laerm_compliance(request: TALaermCheckInput):
     "/compliance/limits",
     tags=["Noise Calculation"],
     summary="TA Lärm Grenzwerte",
-    description="Gibt alle TA Lärm Grenzwerte zurück."
+    description="Gibt alle TA Lärm Grenzwerte zurück.",
 )
 async def get_ta_laerm_limits():
     """
@@ -494,19 +516,17 @@ async def get_ta_laerm_limits():
             "allgemeines_wohngebiet": {"day": 55, "night": 40},
             "reines_wohngebiet": {"day": 50, "night": 35},
             "kurgebiet": {"day": 45, "night": 35},
-            "krankenhaus": {"day": 45, "night": 35}
+            "krankenhaus": {"day": 45, "night": 35},
         },
-        "time_periods": {
-            "day": "06:00-22:00",
-            "night": "22:00-06:00"
-        },
-        "unit": "dB(A)"
+        "time_periods": {"day": "06:00-22:00", "night": "22:00-06:00"},
+        "unit": "dB(A)",
     }
 
 
 # =============================================================================
 # Geodata Endpoints
 # =============================================================================
+
 
 @router.post(
     "/geodata/alkis",
@@ -519,20 +539,19 @@ async def get_ta_laerm_limits():
 
     **Wichtig:** Koordinaten müssen im angegebenen SRS liegen.
     Standard ist EPSG:4326 (WGS84).
-    """
+    """,
 )
 async def load_alkis_data(
     bbox: BBoxInput,
     background_tasks: BackgroundTasks,
-    loader: NRWDataLoader = Depends(get_data_loader)
+    loader: NRWDataLoader = Depends(get_data_loader),
 ):
     """
     Lädt ALKIS Flurstücke für BoundingBox.
     """
     try:
         result = loader.load_alkis_data(
-            bbox=(bbox.xmin, bbox.ymin, bbox.xmax, bbox.ymax),
-            srs=bbox.srs
+            bbox=(bbox.xmin, bbox.ymin, bbox.xmax, bbox.ymax), srs=bbox.srs
         )
 
         # Audit-Log im Hintergrund schreiben
@@ -545,10 +564,10 @@ async def load_alkis_data(
                 "ymin": bbox.ymin,
                 "xmax": bbox.xmax,
                 "ymax": bbox.ymax,
-                "srs": bbox.srs
+                "srs": bbox.srs,
             },
             "data": result,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     except Exception as e:
@@ -569,21 +588,22 @@ async def load_alkis_data(
     - strasse: Straßenverkehrslärm
     - schiene: Schienenverkehrslärm
     - industrie: Industrielärm
-    """
+    """,
 )
 async def load_noise_mapping(
     bbox: BBoxInput,
-    noise_type: str = Query("strasse", description="Lärmtyp: strasse, schiene, industrie"),
+    noise_type: str = Query(
+        "strasse", description="Lärmtyp: strasse, schiene, industrie"
+    ),
     background_tasks: BackgroundTasks = None,
-    loader: NRWDataLoader = Depends(get_data_loader)
+    loader: NRWDataLoader = Depends(get_data_loader),
 ):
     """
     Lädt Lärmkartierungsdaten für BoundingBox.
     """
     try:
         result = loader.load_noise_data(
-            bbox=(bbox.xmin, bbox.ymin, bbox.xmax, bbox.ymax),
-            noise_type=noise_type
+            bbox=(bbox.xmin, bbox.ymin, bbox.xmax, bbox.ymax), noise_type=noise_type
         )
 
         if background_tasks:
@@ -596,10 +616,10 @@ async def load_noise_mapping(
                 "xmin": bbox.xmin,
                 "ymin": bbox.ymin,
                 "xmax": bbox.xmax,
-                "ymax": bbox.ymax
+                "ymax": bbox.ymax,
             },
             "data": result,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     except Exception as e:
@@ -611,25 +631,21 @@ async def load_noise_mapping(
     "/geodata/services/status",
     tags=["Geodata"],
     summary="WFS Service Status",
-    description="Prüft Verfügbarkeit der Geoportal NRW WFS-Dienste."
+    description="Prüft Verfügbarkeit der Geoportal NRW WFS-Dienste.",
 )
-async def check_wfs_services(
-    loader: NRWDataLoader = Depends(get_data_loader)
-):
+async def check_wfs_services(loader: NRWDataLoader = Depends(get_data_loader)):
     """
     Prüft Verfügbarkeit aller WFS-Dienste.
     """
     status = loader.check_service_availability()
 
-    return {
-        "timestamp": datetime.now().isoformat(),
-        "services": status
-    }
+    return {"timestamp": datetime.now().isoformat(), "services": status}
 
 
 # =============================================================================
 # Audit Endpoints
 # =============================================================================
+
 
 @router.get(
     "/audit/trail",
@@ -645,12 +661,12 @@ async def check_wfs_services(
     - Query-Parameter
     - Response-Hash (SHA256)
     - Erfolg/Fehler
-    """
+    """,
 )
 async def get_audit_trail(
     limit: int = Query(100, ge=1, le=1000, description="Maximale Anzahl Einträge"),
     data_source: Optional[str] = Query(None, description="Filter nach Datenquelle"),
-    loader: NRWDataLoader = Depends(get_data_loader)
+    loader: NRWDataLoader = Depends(get_data_loader),
 ):
     """
     Gibt Audit-Trail zurück.
@@ -672,10 +688,10 @@ async def get_audit_trail(
                 "record_count": r.record_count,
                 "processing_time_ms": r.processing_time_ms,
                 "success": r.success,
-                "error_message": r.error_message
+                "error_message": r.error_message,
             }
             for r in records
-        ]
+        ],
     }
 
 
@@ -683,11 +699,10 @@ async def get_audit_trail(
     "/audit/verify/{response_hash}",
     tags=["Audit"],
     summary="Response-Hash verifizieren",
-    description="Verifiziert einen Response-Hash aus dem Audit-Trail."
+    description="Verifiziert einen Response-Hash aus dem Audit-Trail.",
 )
 async def verify_audit_hash(
-    response_hash: str,
-    loader: NRWDataLoader = Depends(get_data_loader)
+    response_hash: str, loader: NRWDataLoader = Depends(get_data_loader)
 ):
     """
     Sucht Audit-Record mit gegebenem Hash.
@@ -700,11 +715,8 @@ async def verify_audit_hash(
                     "timestamp": record.timestamp.isoformat(),
                     "data_source": record.data_source.value,
                     "endpoint_url": record.endpoint_url,
-                    "success": record.success
-                }
+                    "success": record.success,
+                },
             }
 
-    return {
-        "verified": False,
-        "message": "Hash not found in audit trail"
-    }
+    return {"verified": False, "message": "Hash not found in audit trail"}

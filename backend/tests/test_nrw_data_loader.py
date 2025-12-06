@@ -21,25 +21,26 @@ from datetime import datetime
 import json
 import tempfile
 
-from backend.integrations.nrw_data_loader import (
-    NRWDataLoader,
-    DataSource,
-    AuditRecord
-)
+from backend.integrations.nrw_data_loader import NRWDataLoader, DataSource, AuditRecord
+
 
 # Custom Exceptions für Tests (falls nicht im Original definiert)
 class WFSServiceError(Exception):
     """WFS Service nicht erreichbar oder Fehler."""
+
     pass
+
 
 class DataValidationError(ValueError):
     """Datenvalidierungsfehler."""
+
     pass
 
 
 # =============================================================================
 # Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def temp_cache_dir():
@@ -51,17 +52,14 @@ def temp_cache_dir():
 @pytest.fixture
 def temp_audit_log():
     """Temporäre Audit-Log Datei."""
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.jsonl', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
         yield Path(f.name)
 
 
 @pytest.fixture
 def loader(temp_cache_dir, temp_audit_log):
     """NRWDataLoader mit temporären Pfaden."""
-    return NRWDataLoader(
-        cache_dir=temp_cache_dir,
-        audit_log_path=temp_audit_log
-    )
+    return NRWDataLoader(cache_dir=temp_cache_dir, audit_log_path=temp_audit_log)
 
 
 @pytest.fixture
@@ -87,21 +85,30 @@ def mock_wfs_response():
                 "id": "flurstueck.1234",
                 "geometry": {
                     "type": "Polygon",
-                    "coordinates": [[[7.693, 51.371], [7.694, 51.371], [7.694, 51.372], [7.693, 51.372], [7.693, 51.371]]]
+                    "coordinates": [
+                        [
+                            [7.693, 51.371],
+                            [7.694, 51.371],
+                            [7.694, 51.372],
+                            [7.693, 51.372],
+                            [7.693, 51.371],
+                        ]
+                    ],
                 },
                 "properties": {
                     "flurstuecksnummer": "1234",
                     "flaeche": 5000.0,
-                    "nutzung": "Wohnbauflaeche"
-                }
+                    "nutzung": "Wohnbauflaeche",
+                },
             }
-        ]
+        ],
     }
 
 
 # =============================================================================
 # Tests: Initialization
 # =============================================================================
+
 
 class TestNRWDataLoaderInit:
     """Tests für die Initialisierung des Data Loaders."""
@@ -115,10 +122,7 @@ class TestNRWDataLoaderInit:
 
     def test_custom_paths(self, temp_cache_dir, temp_audit_log):
         """Test: Benutzerdefinierte Pfade werden verwendet."""
-        loader = NRWDataLoader(
-            cache_dir=temp_cache_dir,
-            audit_log_path=temp_audit_log
-        )
+        loader = NRWDataLoader(cache_dir=temp_cache_dir, audit_log_path=temp_audit_log)
 
         assert loader.cache_dir == temp_cache_dir
         assert loader.audit_log_path == temp_audit_log
@@ -146,22 +150,23 @@ class TestNRWDataLoaderInit:
         """Test: HTTP-Session hat Retry-Adapter."""
         assert loader.session is not None
         # Retry-Logik ist konfiguriert
-        assert hasattr(loader.session, 'get')
+        assert hasattr(loader.session, "get")
 
 
 # =============================================================================
 # Tests: Service Availability
 # =============================================================================
 
+
 class TestServiceAvailability:
     """Tests für Service-Verfügbarkeitsprüfung."""
 
-    @patch('requests.Session.get')
+    @patch("requests.Session.get")
     def test_check_service_availability_success(self, mock_get, loader):
         """Test: Erfolgreiche Verfügbarkeitsprüfung."""
         mock_response = Mock()
         mock_response.status_code = 200
-        mock_response.text = '<wfs:WFS_Capabilities>'
+        mock_response.text = "<wfs:WFS_Capabilities>"
         mock_get.return_value = mock_response
 
         status = loader.check_service_availability()
@@ -169,7 +174,7 @@ class TestServiceAvailability:
         assert "alkis" in status
         assert "laerm" in status
 
-    @patch('requests.Session.get')
+    @patch("requests.Session.get")
     def test_check_service_unavailable(self, mock_get, loader):
         """Test: Service nicht erreichbar."""
         mock_get.side_effect = Exception("Connection refused")
@@ -180,29 +185,35 @@ class TestServiceAvailability:
         for service, info in status.items():
             assert "available" in info
 
-    @patch('requests.Session.get')
+    @patch("requests.Session.get")
     def test_check_service_timeout(self, mock_get, loader):
         """Test: Service-Timeout wird behandelt."""
         from requests.exceptions import Timeout
+
         mock_get.side_effect = Timeout("Request timed out")
 
         status = loader.check_service_availability()
 
         for service, info in status.items():
             if not info.get("available", True):
-                assert "timeout" in info.get("error", "").lower() or \
-                       "timed out" in info.get("error", "").lower()
+                assert (
+                    "timeout" in info.get("error", "").lower()
+                    or "timed out" in info.get("error", "").lower()
+                )
 
 
 # =============================================================================
 # Tests: ALKIS Data Loading
 # =============================================================================
 
+
 class TestALKISDataLoading:
     """Tests für ALKIS-Datenabfrage."""
 
-    @patch('requests.Session.get')
-    def test_load_alkis_data_success(self, mock_get, loader, sample_bbox, mock_wfs_response):
+    @patch("requests.Session.get")
+    def test_load_alkis_data_success(
+        self, mock_get, loader, sample_bbox, mock_wfs_response
+    ):
         """Test: Erfolgreiche ALKIS-Datenabfrage."""
         mock_response = Mock()
         mock_response.status_code = 200
@@ -215,8 +226,10 @@ class TestALKISDataLoading:
         assert result is not None
         assert "features" in result or len(result) > 0
 
-    @patch('requests.Session.get')
-    def test_load_alkis_data_creates_audit(self, mock_get, loader, sample_bbox, mock_wfs_response, temp_audit_log):
+    @patch("requests.Session.get")
+    def test_load_alkis_data_creates_audit(
+        self, mock_get, loader, sample_bbox, mock_wfs_response, temp_audit_log
+    ):
         """Test: Audit-Log wird bei ALKIS-Abfrage erstellt."""
         mock_response = Mock()
         mock_response.status_code = 200
@@ -229,8 +242,10 @@ class TestALKISDataLoading:
         # Prüfe ob Audit-Records existieren
         assert len(loader.audit_records) > 0 or temp_audit_log.stat().st_size > 0
 
-    @patch('requests.Session.get')
-    def test_load_alkis_data_with_srs(self, mock_get, loader, sample_bbox_epsg25832, mock_wfs_response):
+    @patch("requests.Session.get")
+    def test_load_alkis_data_with_srs(
+        self, mock_get, loader, sample_bbox_epsg25832, mock_wfs_response
+    ):
         """Test: ALKIS-Abfrage mit EPSG:25832."""
         mock_response = Mock()
         mock_response.status_code = 200
@@ -238,10 +253,7 @@ class TestALKISDataLoading:
         mock_response.content = json.dumps(mock_wfs_response).encode()
         mock_get.return_value = mock_response
 
-        result = loader.load_alkis_data(
-            bbox=sample_bbox_epsg25832,
-            srs="EPSG:25832"
-        )
+        result = loader.load_alkis_data(bbox=sample_bbox_epsg25832, srs="EPSG:25832")
 
         # Prüfe ob SRS im Request verwendet wurde
         call_args = mock_get.call_args
@@ -265,42 +277,41 @@ class TestALKISDataLoading:
 # Tests: Lärmkartierung Data Loading
 # =============================================================================
 
+
 class TestNoiseDataLoading:
     """Tests für Lärmkartierung-Datenabfrage."""
 
-    @patch('requests.Session.get')
+    @patch("requests.Session.get")
     def test_load_noise_data_success(self, mock_get, loader, sample_bbox):
         """Test: Erfolgreiche Lärmkartierungs-Abfrage."""
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {"type": "FeatureCollection", "features": []}
-        mock_response.content = b'{}'
+        mock_response.content = b"{}"
         mock_get.return_value = mock_response
 
         result = loader.load_noise_data(bbox=sample_bbox)
 
         assert result is not None
 
-    @patch('requests.Session.get')
+    @patch("requests.Session.get")
     def test_load_noise_data_by_type(self, mock_get, loader, sample_bbox):
         """Test: Lärmkartierung nach Typ (Straße, Schiene, etc.)."""
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {"type": "FeatureCollection", "features": []}
-        mock_response.content = b'{}'
+        mock_response.content = b"{}"
         mock_get.return_value = mock_response
 
         for noise_type in ["strasse", "schiene", "industrie"]:
-            result = loader.load_noise_data(
-                bbox=sample_bbox,
-                noise_type=noise_type
-            )
+            result = loader.load_noise_data(bbox=sample_bbox, noise_type=noise_type)
             assert result is not None
 
 
 # =============================================================================
 # Tests: Audit Logging
 # =============================================================================
+
 
 class TestAuditLogging:
     """Tests für Audit-Logging Funktionalität."""
@@ -315,7 +326,7 @@ class TestAuditLogging:
             response_hash="sha256:abc123",
             record_count=10,
             processing_time_ms=150,
-            success=True
+            success=True,
         )
 
         assert record.data_source == DataSource.ALKIS
@@ -333,14 +344,16 @@ class TestAuditLogging:
             record_count=0,
             processing_time_ms=5000,
             success=False,
-            error_message="Connection timeout"
+            error_message="Connection timeout",
         )
 
         assert record.success is False
         assert record.error_message == "Connection timeout"
 
-    @patch('requests.Session.get')
-    def test_audit_log_contains_hash(self, mock_get, loader, sample_bbox, mock_wfs_response):
+    @patch("requests.Session.get")
+    def test_audit_log_contains_hash(
+        self, mock_get, loader, sample_bbox, mock_wfs_response
+    ):
         """Test: Audit-Log enthält Response-Hash."""
         mock_response = Mock()
         mock_response.status_code = 200
@@ -357,8 +370,10 @@ class TestAuditLogging:
             assert last_record.response_hash is not None
             assert len(last_record.response_hash) > 0
 
-    @patch('requests.Session.get')
-    def test_audit_log_gerichtsfest(self, mock_get, loader, sample_bbox, mock_wfs_response, temp_audit_log):
+    @patch("requests.Session.get")
+    def test_audit_log_gerichtsfest(
+        self, mock_get, loader, sample_bbox, mock_wfs_response, temp_audit_log
+    ):
         """Test: Audit-Log ist gerichtsfest (enthält alle erforderlichen Felder)."""
         mock_response = Mock()
         mock_response.status_code = 200
@@ -373,7 +388,7 @@ class TestAuditLogging:
 
         # Lese und prüfe Audit-Log
         if temp_audit_log.exists() and temp_audit_log.stat().st_size > 0:
-            with open(temp_audit_log, 'r') as f:
+            with open(temp_audit_log, "r") as f:
                 for line in f:
                     if line.strip():
                         record = json.loads(line)
@@ -389,11 +404,14 @@ class TestAuditLogging:
 # Tests: Caching
 # =============================================================================
 
+
 class TestCaching:
     """Tests für Cache-Funktionalität."""
 
-    @patch('requests.Session.get')
-    def test_cache_write(self, mock_get, loader, sample_bbox, mock_wfs_response, temp_cache_dir):
+    @patch("requests.Session.get")
+    def test_cache_write(
+        self, mock_get, loader, sample_bbox, mock_wfs_response, temp_cache_dir
+    ):
         """Test: Daten werden in Cache geschrieben."""
         mock_response = Mock()
         mock_response.status_code = 200
@@ -404,11 +422,15 @@ class TestCaching:
         loader.load_alkis_data(bbox=sample_bbox, use_cache=True)
 
         # Prüfe ob Cache-Datei existiert
-        cache_files = list(temp_cache_dir.glob("*.json")) + list(temp_cache_dir.glob("*.geojson"))
+        cache_files = list(temp_cache_dir.glob("*.json")) + list(
+            temp_cache_dir.glob("*.geojson")
+        )
         assert len(cache_files) >= 0  # Cache kann optional sein
 
-    @patch('requests.Session.get')
-    def test_cache_read(self, mock_get, loader, sample_bbox, mock_wfs_response, temp_cache_dir):
+    @patch("requests.Session.get")
+    def test_cache_read(
+        self, mock_get, loader, sample_bbox, mock_wfs_response, temp_cache_dir
+    ):
         """Test: Daten werden aus Cache gelesen."""
         mock_response = Mock()
         mock_response.status_code = 200
@@ -430,10 +452,11 @@ class TestCaching:
 # Tests: Error Handling
 # =============================================================================
 
+
 class TestErrorHandling:
     """Tests für Fehlerbehandlung."""
 
-    @patch('requests.Session.get')
+    @patch("requests.Session.get")
     def test_wfs_service_error(self, mock_get, loader, sample_bbox):
         """Test: WFS-Service-Fehler wird behandelt."""
         mock_response = Mock()
@@ -444,8 +467,10 @@ class TestErrorHandling:
         with pytest.raises(WFSServiceError):
             loader.load_alkis_data(bbox=sample_bbox)
 
-    @patch('requests.Session.get')
-    def test_network_error_retry(self, mock_get, loader, sample_bbox, mock_wfs_response):
+    @patch("requests.Session.get")
+    def test_network_error_retry(
+        self, mock_get, loader, sample_bbox, mock_wfs_response
+    ):
         """Test: Netzwerkfehler löst Retry aus."""
         # Erste zwei Anfragen scheitern, dritte erfolgreich
         mock_error = Exception("Connection reset")
@@ -464,22 +489,25 @@ class TestErrorHandling:
             # Auch akzeptabel, wenn alle Retries fehlschlagen
             pass
 
-    @patch('requests.Session.get')
+    @patch("requests.Session.get")
     def test_invalid_json_response(self, mock_get, loader, sample_bbox):
         """Test: Ungültige JSON-Response wird behandelt."""
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.side_effect = json.JSONDecodeError("Invalid", "", 0)
-        mock_response.content = b'<invalid>xml</invalid>'
+        mock_response.content = b"<invalid>xml</invalid>"
         mock_get.return_value = mock_response
 
-        with pytest.raises((WFSServiceError, DataValidationError, json.JSONDecodeError)):
+        with pytest.raises(
+            (WFSServiceError, DataValidationError, json.JSONDecodeError)
+        ):
             loader.load_alkis_data(bbox=sample_bbox)
 
 
 # =============================================================================
 # Tests: Data Validation
 # =============================================================================
+
 
 class TestDataValidation:
     """Tests für Datenvalidierung."""
@@ -526,6 +554,7 @@ class TestDataValidation:
 # =============================================================================
 # Tests: Integration (Optional - nur bei Netzwerkzugriff)
 # =============================================================================
+
 
 @pytest.mark.integration
 @pytest.mark.skipif(True, reason="Requires network access to NRW WFS services")
