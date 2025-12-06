@@ -24,7 +24,6 @@ import tempfile
 
 from backend.integrations.nrw_data_loader import (
     NRWDataLoader,
-    WFSEndpoint,
     DataSource,
     AuditRecord
 )
