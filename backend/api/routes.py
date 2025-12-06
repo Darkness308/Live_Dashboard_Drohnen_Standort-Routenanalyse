@@ -352,7 +352,7 @@ async def calculate_noise(
 
         # Berechnung durchführen
         result = calculator.calculate(
-            source, receiver, use_octave_bands=request.use_octave_bands
+            source, receiver, octave_bands=request.use_octave_bands
         )
 
         return CalculationResultResponse(
