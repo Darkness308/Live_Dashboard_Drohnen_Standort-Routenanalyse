@@ -42,10 +42,11 @@ try:
 except ImportError:
     SHAPELY_AVAILABLE = False
 
+# Check pyproj availability without importing
 try:
-    import pyproj
-    PYPROJ_AVAILABLE = True
-except ImportError:
+    import importlib.util
+    PYPROJ_AVAILABLE = importlib.util.find_spec("pyproj") is not None
+except (ImportError, AttributeError):
     PYPROJ_AVAILABLE = False
 
 
