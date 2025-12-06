@@ -15,10 +15,9 @@ Referenzen:
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 from pathlib import Path
 from datetime import datetime
-import hashlib
 import json
 import tempfile
 
@@ -127,14 +126,14 @@ class TestNRWDataLoaderInit:
     def test_cache_dir_created(self, temp_cache_dir):
         """Test: Cache-Verzeichnis wird erstellt."""
         cache_subdir = temp_cache_dir / "new_subdir"
-        loader = NRWDataLoader(cache_dir=cache_subdir)
+        NRWDataLoader(cache_dir=cache_subdir)
 
         assert cache_subdir.exists()
 
     def test_audit_log_dir_created(self, temp_cache_dir):
         """Test: Audit-Log Verzeichnis wird erstellt."""
         audit_path = temp_cache_dir / "logs" / "audit.jsonl"
-        loader = NRWDataLoader(audit_log_path=audit_path)
+        NRWDataLoader(audit_log_path=audit_path)
 
         assert audit_path.parent.exists()
 

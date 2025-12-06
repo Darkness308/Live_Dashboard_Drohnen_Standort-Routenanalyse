@@ -13,7 +13,7 @@ API-Endpoints für:
 
 from fastapi import APIRouter, HTTPException, Query, Depends, BackgroundTasks
 from pydantic import BaseModel, Field, validator
-from typing import List, Optional, Dict, Any, Tuple
+from typing import List, Optional, Dict, Tuple
 from datetime import datetime
 from enum import Enum
 import logging
@@ -25,11 +25,10 @@ try:
         NoiseSource,
         Receiver,
         WeatherConditions,
-        Obstacle,
         TALaermChecker,
         GroundType
     )
-    from integrations.nrw_data_loader import NRWDataLoader, DataSource
+    from integrations.nrw_data_loader import NRWDataLoader
 except ImportError:
     # Fallback für absolute Imports
     from backend.calculations.iso9613 import (
@@ -37,25 +36,26 @@ except ImportError:
         NoiseSource,
         Receiver,
         WeatherConditions,
-        Obstacle,
         TALaermChecker,
         GroundType
     )
-    from backend.integrations.nrw_data_loader import NRWDataLoader, DataSource
+    from backend.integrations.nrw_data_loader import NRWDataLoader
 
 # Optional: Pydantic Schemas (werden inline definiert falls nicht vorhanden)
-try:
-    from models.schemas import (
-        NoiseCalculationRequest,
-        NoiseCalculationResponse,
-        GridCalculationRequest,
-        TALaermComplianceRequest,
-        TALaermComplianceResponse,
-        BoundingBox,
-        GeoJSONResponse
-    )
-except ImportError:
-    pass  # Verwende inline-definierte Models
+# NOTE: These imports are commented out as they are not currently used.
+# Schemas are defined inline below. Uncomment if external schemas are needed.
+# try:
+#     from models.schemas import (
+#         NoiseCalculationRequest,
+#         NoiseCalculationResponse,
+#         GridCalculationRequest,
+#         TALaermComplianceRequest,
+#         TALaermComplianceResponse,
+#         BoundingBox,
+#         GeoJSONResponse
+#     )
+# except ImportError:
+#     pass  # Verwende inline-definierte Models
 
 logger = logging.getLogger(__name__)
 

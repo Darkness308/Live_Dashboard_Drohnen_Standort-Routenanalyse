@@ -23,7 +23,6 @@ from backend.calculations.iso9613 import (
     Obstacle,
     AttenuationResult,
     GroundType,
-    AtmosphericCondition,
     TALaermChecker
 )
 
