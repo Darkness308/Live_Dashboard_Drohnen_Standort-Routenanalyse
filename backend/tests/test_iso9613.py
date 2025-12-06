@@ -24,13 +24,14 @@ from backend.calculations.iso9613 import (
     AttenuationResult,
     GroundType,
     AtmosphericCondition,
-    TALaermChecker
+    TALaermChecker,
 )
 
 
 # =============================================================================
 # Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def calculator():
@@ -44,7 +45,7 @@ def calculator_with_weather():
     weather = WeatherConditions(
         temperature_celsius=20.0,
         relative_humidity_percent=70.0,
-        atmospheric_pressure_hpa=1013.25
+        atmospheric_pressure_hpa=1013.25,
     )
     return ISO9613Calculator(weather=weather)
 
@@ -58,13 +59,7 @@ def typical_drone():
 @pytest.fixture
 def custom_source():
     """Benutzerdefinierte Schallquelle."""
-    return NoiseSource(
-        lw=80.0,
-        x=100,
-        y=50,
-        z=30,
-        name="Test-Drohne"
-    )
+    return NoiseSource(lw=80.0, x=100, y=50, z=30, name="Test-Drohne")
 
 
 @pytest.fixture
@@ -82,16 +77,13 @@ def elevated_receiver():
 @pytest.fixture
 def residential_receiver():
     """Empfänger in Wohngebiet."""
-    return Receiver(
-        x=200, y=0, z=4.0,
-        name="Wohngebiet",
-        ground_type=GroundType.SOFT
-    )
+    return Receiver(x=200, y=0, z=4.0, name="Wohngebiet", ground_type=GroundType.SOFT)
 
 
 # =============================================================================
 # Tests: NoiseSource
 # =============================================================================
+
 
 class TestNoiseSource:
     """Tests für die NoiseSource Klasse."""
@@ -127,6 +119,7 @@ class TestNoiseSource:
 # Tests: Receiver
 # =============================================================================
 
+
 class TestReceiver:
     """Tests für die Receiver Klasse."""
 
@@ -149,6 +142,7 @@ class TestReceiver:
 # =============================================================================
 # Tests: Geometrische Ausbreitung (Adiv)
 # =============================================================================
+
 
 class TestGeometricDivergence:
     """Tests für die geometrische Ausbreitung nach ISO 9613-2 Abschnitt 7.1."""
@@ -206,6 +200,7 @@ class TestGeometricDivergence:
 # Tests: Atmosphärische Absorption (Aatm)
 # =============================================================================
 
+
 class TestAtmosphericAbsorption:
     """Tests für die atmosphärische Absorption nach ISO 9613-2 Abschnitt 7.2."""
 
@@ -238,6 +233,7 @@ class TestAtmosphericAbsorption:
 # =============================================================================
 # Tests: Bodeneffekt (Agr)
 # =============================================================================
+
 
 class TestGroundEffect:
     """Tests für den Bodeneffekt nach ISO 9613-2 Abschnitt 7.3."""
@@ -288,10 +284,13 @@ class TestGroundEffect:
 # Tests: Abschirmung (Abar)
 # =============================================================================
 
+
 class TestBarrierAttenuation:
     """Tests für die Abschirmungsberechnung nach ISO 9613-2 Abschnitt 7.4."""
 
-    def test_no_obstacles_no_attenuation(self, calculator, typical_drone, elevated_receiver):
+    def test_no_obstacles_no_attenuation(
+        self, calculator, typical_drone, elevated_receiver
+    ):
         """Test: Keine Hindernisse = keine Abschirmung."""
         result = calculator._barrier_attenuation(typical_drone, elevated_receiver, [])
         assert result == 0.0
@@ -322,6 +321,7 @@ class TestBarrierAttenuation:
 # Tests: Gesamtberechnung
 # =============================================================================
 
+
 class TestFullCalculation:
     """Tests für die vollständige Schallpegelberechnung."""
 
@@ -346,35 +346,45 @@ class TestFullCalculation:
 
         # Jeder nachfolgende Pegel sollte niedriger sein
         for i in range(len(spls) - 1):
-            assert spls[i] > spls[i + 1], f"SPL at {distances[i]}m should be higher than at {distances[i+1]}m"
+            assert (
+                spls[i] > spls[i + 1]
+            ), f"SPL at {distances[i]}m should be higher than at {distances[i+1]}m"
 
-    def test_result_contains_all_components(self, calculator, typical_drone, elevated_receiver):
+    def test_result_contains_all_components(
+        self, calculator, typical_drone, elevated_receiver
+    ):
         """Test: Ergebnis enthält alle Dämpfungskomponenten."""
         result = calculator.calculate(typical_drone, elevated_receiver)
 
-        assert hasattr(result, 'a_div')
-        assert hasattr(result, 'a_atm')
-        assert hasattr(result, 'a_gr')
-        assert hasattr(result, 'a_bar')
-        assert hasattr(result, 'a_misc')
-        assert hasattr(result, 'total_attenuation')
-        assert hasattr(result, 'sound_pressure_level')
+        assert hasattr(result, "a_div")
+        assert hasattr(result, "a_atm")
+        assert hasattr(result, "a_gr")
+        assert hasattr(result, "a_bar")
+        assert hasattr(result, "a_misc")
+        assert hasattr(result, "total_attenuation")
+        assert hasattr(result, "sound_pressure_level")
 
     def test_total_attenuation_sum(self, calculator, typical_drone, elevated_receiver):
         """Test: Gesamtdämpfung = Summe der Komponenten."""
         result = calculator.calculate(typical_drone, elevated_receiver)
 
-        expected_total = result.a_div + result.a_atm + result.a_gr + result.a_bar + result.a_misc
+        expected_total = (
+            result.a_div + result.a_atm + result.a_gr + result.a_bar + result.a_misc
+        )
         assert result.total_attenuation == pytest.approx(expected_total, abs=0.01)
 
     def test_spl_formula(self, calculator, typical_drone, elevated_receiver):
         """Test: LAT = LW + Dc - A."""
         result = calculator.calculate(typical_drone, elevated_receiver)
 
-        expected_spl = typical_drone.lw + typical_drone.directivity - result.total_attenuation
+        expected_spl = (
+            typical_drone.lw + typical_drone.directivity - result.total_attenuation
+        )
         assert result.sound_pressure_level == pytest.approx(expected_spl, abs=0.01)
 
-    def test_calculation_method_in_result(self, calculator, typical_drone, elevated_receiver):
+    def test_calculation_method_in_result(
+        self, calculator, typical_drone, elevated_receiver
+    ):
         """Test: Berechnungsmethode ist dokumentiert."""
         result = calculator.calculate(typical_drone, elevated_receiver)
 
@@ -396,6 +406,7 @@ class TestFullCalculation:
 # Tests: Grid-Berechnung
 # =============================================================================
 
+
 class TestGridCalculation:
     """Tests für die Rasterberechnung."""
 
@@ -405,7 +416,7 @@ class TestGridCalculation:
         results = calculator.calculate_grid(typical_drone, bbox, grid_size=25)
 
         assert len(results) > 0
-        assert all('x' in r and 'y' in r and 'spl_dba' in r for r in results)
+        assert all("x" in r and "y" in r and "spl_dba" in r for r in results)
 
     def test_grid_point_count(self, calculator, typical_drone):
         """Test: Korrekte Anzahl von Rasterpunkten."""
@@ -421,6 +432,7 @@ class TestGridCalculation:
 # =============================================================================
 # Tests: TA Lärm Compliance
 # =============================================================================
+
 
 class TestTALaermChecker:
     """Tests für die TA Lärm Grenzwertprüfung."""
@@ -445,8 +457,12 @@ class TestTALaermChecker:
 
     def test_residential_night_stricter(self):
         """Test: Nachtgrenzwerte sind strenger."""
-        result_day = TALaermChecker.check_compliance(45, "allgemeines_wohngebiet", False)
-        result_night = TALaermChecker.check_compliance(45, "allgemeines_wohngebiet", True)
+        result_day = TALaermChecker.check_compliance(
+            45, "allgemeines_wohngebiet", False
+        )
+        result_night = TALaermChecker.check_compliance(
+            45, "allgemeines_wohngebiet", True
+        )
 
         assert result_day["compliant"] is True
         assert result_night["compliant"] is False  # Nachtgrenzwert ist 40 dB
@@ -475,7 +491,7 @@ class TestTALaermChecker:
             "allgemeines_wohngebiet",
             "reines_wohngebiet",
             "kurgebiet",
-            "krankenhaus"
+            "krankenhaus",
         ]
 
         for zone in zone_types:
@@ -494,6 +510,7 @@ class TestTALaermChecker:
 # Tests: Edge Cases
 # =============================================================================
 
+
 class TestEdgeCases:
     """Tests für Grenzfälle und Fehlerbehandlung."""
 
@@ -502,8 +519,9 @@ class TestEdgeCases:
         receiver = Receiver(x=0.5, y=0, z=50)
         result = calculator.calculate(typical_drone, receiver)
 
-        assert any("kurze Distanz" in note for note in result.notes) or \
-               any("Nahfeld" in note for note in result.notes)
+        assert any("kurze Distanz" in note for note in result.notes) or any(
+            "Nahfeld" in note for note in result.notes
+        )
 
     def test_high_source_note(self, calculator):
         """Test: Hohe Quelle erzeugt Hinweis."""

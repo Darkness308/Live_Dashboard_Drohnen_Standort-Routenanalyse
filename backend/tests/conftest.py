@@ -20,7 +20,7 @@ def sample_coordinates():
     return {
         "center": {"lat": 51.371099, "lng": 7.693150},
         "bbox_wgs84": (7.650000, 51.350000, 7.750000, 51.400000),
-        "bbox_utm32": (400000, 5690000, 410000, 5700000)
+        "bbox_utm32": (400000, 5690000, 410000, 5700000),
     }
 
 
@@ -35,7 +35,7 @@ def ta_laerm_limits():
         "allgemeines_wohngebiet": {"day": 55, "night": 40},
         "reines_wohngebiet": {"day": 50, "night": 35},
         "kurgebiet": {"day": 45, "night": 35},
-        "krankenhaus": {"day": 45, "night": 35}
+        "krankenhaus": {"day": 45, "night": 35},
     }
 
 
@@ -48,14 +48,8 @@ def mock_geojson_response():
             {
                 "type": "Feature",
                 "id": "test.1",
-                "geometry": {
-                    "type": "Point",
-                    "coordinates": [7.693150, 51.371099]
-                },
-                "properties": {
-                    "name": "Test Feature",
-                    "value": 42
-                }
+                "geometry": {"type": "Point", "coordinates": [7.693150, 51.371099]},
+                "properties": {"name": "Test Feature", "value": 42},
             }
-        ]
+        ],
     }
