@@ -1,0 +1,500 @@
+name: Auto-Fix Build Failures
+
+on:
+  workflow_run:
+    workflows: ["Backend CI/CD", "Code Quality"]
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      max_retries:
+        description: 'Maximum repair attempts'
+        required: false
+        default: '3'
+        type: string
+      target_branch:
+        description: 'Branch to fix'
+        required: false
+        default: 'main'
+        type: string
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+  MAX_RETRIES: ${{ github.event.inputs.max_retries || '3' }}
+
+jobs:
+  analyze-failure:
+    name: Analyze Build Failure
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' || github.event_name == 'workflow_dispatch' }}
+    outputs:
+      has_python_errors: ${{ steps.analyze.outputs.has_python_errors }}
+      has_js_errors: ${{ steps.analyze.outputs.has_js_errors }}
+      has_format_errors: ${{ steps.analyze.outputs.has_format_errors }}
+      has_type_errors: ${{ steps.analyze.outputs.has_type_errors }}
+      error_summary: ${{ steps.analyze.outputs.error_summary }}
+      should_attempt_fix: ${{ steps.analyze.outputs.should_attempt_fix }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get Failed Workflow Logs
+        id: get_logs
+        if: github.event_name == 'workflow_run'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const runId = context.payload.workflow_run.id;
+
+            // Get jobs for the failed workflow
+            const jobs = await github.rest.actions.listJobsForWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: runId
+            });
+
+            const failedJobs = jobs.data.jobs.filter(job => job.conclusion === 'failure');
+
+            let errorLog = '';
+            for (const job of failedJobs) {
+              try {
+                const logs = await github.rest.actions.downloadJobLogsForWorkflowRun({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  job_id: job.id
+                });
+                errorLog += `\n=== ${job.name} ===\n${logs.data}`;
+              } catch (e) {
+                errorLog += `\n=== ${job.name} ===\nCould not retrieve logs: ${e.message}`;
+              }
+            }
+
+            const fs = require('fs');
+            fs.writeFileSync('build_errors.log', errorLog);
+
+            return failedJobs.map(j => j.name).join(', ');
+
+      - name: Analyze Error Patterns
+        id: analyze
+        run: |
+          echo "🔍 Analyzing build errors..."
+
+          # Initialize flags
+          has_python_errors="false"
+          has_js_errors="false"
+          has_format_errors="false"
+          has_type_errors="false"
+          should_attempt_fix="false"
+          error_summary=""
+
+          # Check for error log file
+          if [ -f "build_errors.log" ]; then
+            LOG_CONTENT=$(cat build_errors.log)
+          else
+            # Run checks locally to detect issues
+            LOG_CONTENT=""
+          fi
+
+          # === Python Error Detection ===
+          cd backend 2>/dev/null || mkdir -p backend
+
+          # Check for Ruff/Flake8 errors
+          if command -v pip &> /dev/null; then
+            pip install ruff black mypy --quiet 2>/dev/null || true
+
+            if ruff check . 2>&1 | grep -q "error\|E\|F"; then
+              has_python_errors="true"
+              error_summary="${error_summary}Python linting errors detected. "
+              should_attempt_fix="true"
+            fi
+
+            # Check for Black formatting issues
+            if ! black --check . 2>&1 | grep -q "would reformat\|error"; then
+              :
+            else
+              has_format_errors="true"
+              error_summary="${error_summary}Python formatting issues detected. "
+              should_attempt_fix="true"
+            fi
+
+            # Check for MyPy type errors
+            if mypy . --ignore-missing-imports 2>&1 | grep -q "error:"; then
+              has_type_errors="true"
+              error_summary="${error_summary}Type errors detected. "
+            fi
+          fi
+
+          cd ..
+
+          # === JavaScript Error Detection ===
+          if [ -d "assets" ]; then
+            if command -v npx &> /dev/null; then
+              # Check for ESLint errors
+              if npx eslint assets/*.js 2>&1 | grep -qE "error|warning"; then
+                has_js_errors="true"
+                error_summary="${error_summary}JavaScript linting errors detected. "
+                should_attempt_fix="true"
+              fi
+            fi
+          fi
+
+          # Set outputs
+          echo "has_python_errors=$has_python_errors" >> $GITHUB_OUTPUT
+          echo "has_js_errors=$has_js_errors" >> $GITHUB_OUTPUT
+          echo "has_format_errors=$has_format_errors" >> $GITHUB_OUTPUT
+          echo "has_type_errors=$has_type_errors" >> $GITHUB_OUTPUT
+          echo "should_attempt_fix=$should_attempt_fix" >> $GITHUB_OUTPUT
+          echo "error_summary=$error_summary" >> $GITHUB_OUTPUT
+
+          echo "📊 Analysis Results:"
+          echo "  Python Errors: $has_python_errors"
+          echo "  JS Errors: $has_js_errors"
+          echo "  Format Errors: $has_format_errors"
+          echo "  Type Errors: $has_type_errors"
+          echo "  Should Fix: $should_attempt_fix"
+          echo "  Summary: $error_summary"
+
+  auto-fix-python:
+    name: Auto-Fix Python Issues
+    runs-on: ubuntu-latest
+    needs: analyze-failure
+    if: needs.analyze-failure.outputs.has_python_errors == 'true' || needs.analyze-failure.outputs.has_format_errors == 'true'
+    outputs:
+      fixed: ${{ steps.fix.outputs.fixed }}
+      changes_made: ${{ steps.fix.outputs.changes_made }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Tools
+        run: |
+          pip install ruff black isort autoflake
+
+      - name: Auto-Fix Python Issues
+        id: fix
+        run: |
+          cd backend
+
+          echo "🔧 Starting automatic Python fixes..."
+          changes_made="false"
+
+          # 1. Remove unused imports with autoflake
+          echo "  → Removing unused imports..."
+          autoflake --in-place --remove-all-unused-imports --recursive . 2>/dev/null || true
+
+          # 2. Sort imports with isort
+          echo "  → Sorting imports..."
+          isort . --profile black 2>/dev/null || true
+
+          # 3. Fix with Ruff (auto-fixable rules)
+          echo "  → Applying Ruff auto-fixes..."
+          ruff check . --fix --unsafe-fixes 2>/dev/null || true
+
+          # 4. Format with Black
+          echo "  → Formatting with Black..."
+          black . 2>/dev/null || true
+
+          # Check if changes were made
+          cd ..
+          if git diff --quiet; then
+            echo "No changes made"
+            echo "fixed=false" >> $GITHUB_OUTPUT
+            echo "changes_made=false" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Changes applied successfully"
+            echo "fixed=true" >> $GITHUB_OUTPUT
+            echo "changes_made=true" >> $GITHUB_OUTPUT
+
+            # Show what changed
+            echo "📝 Changes made:"
+            git diff --stat
+          fi
+
+      - name: Commit Python Fixes
+        if: steps.fix.outputs.changes_made == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add -A
+          git commit -m "fix(backend): Auto-fix Python linting and formatting issues
+
+          Automated fixes applied by Self-Healing workflow:
+          - Removed unused imports (autoflake)
+          - Sorted imports (isort)
+          - Applied Ruff auto-fixes
+          - Formatted code (Black)
+
+          Triggered by: ${{ github.event.workflow_run.name || 'manual' }}
+          Run ID: ${{ github.run_id }}"
+
+          git push
+
+  auto-fix-javascript:
+    name: Auto-Fix JavaScript Issues
+    runs-on: ubuntu-latest
+    needs: analyze-failure
+    if: needs.analyze-failure.outputs.has_js_errors == 'true'
+    outputs:
+      fixed: ${{ steps.fix.outputs.fixed }}
+      changes_made: ${{ steps.fix.outputs.changes_made }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Tools
+        run: |
+          npm install -g eslint prettier
+          npm install -g eslint-config-airbnb-base eslint-plugin-import
+
+      - name: Auto-Fix JavaScript Issues
+        id: fix
+        run: |
+          echo "🔧 Starting automatic JavaScript fixes..."
+
+          # 1. Fix ESLint issues
+          echo "  → Applying ESLint auto-fixes..."
+          eslint assets/*.js --fix 2>/dev/null || true
+
+          # 2. Format with Prettier (if config exists)
+          if [ -f ".prettierrc" ] || [ -f ".prettierrc.json" ]; then
+            echo "  → Formatting with Prettier..."
+            prettier --write "assets/*.js" 2>/dev/null || true
+          fi
+
+          # Check if changes were made
+          if git diff --quiet; then
+            echo "No changes made"
+            echo "fixed=false" >> $GITHUB_OUTPUT
+            echo "changes_made=false" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Changes applied successfully"
+            echo "fixed=true" >> $GITHUB_OUTPUT
+            echo "changes_made=true" >> $GITHUB_OUTPUT
+
+            echo "📝 Changes made:"
+            git diff --stat
+          fi
+
+      - name: Commit JavaScript Fixes
+        if: steps.fix.outputs.changes_made == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add -A
+          git commit -m "fix(frontend): Auto-fix JavaScript linting issues
+
+          Automated fixes applied by Self-Healing workflow:
+          - Applied ESLint auto-fixes
+          - Code formatting applied
+
+          Triggered by: ${{ github.event.workflow_run.name || 'manual' }}
+          Run ID: ${{ github.run_id }}"
+
+          git push
+
+  verify-and-retry:
+    name: Verify Fixes & Retry Build
+    runs-on: ubuntu-latest
+    needs: [analyze-failure, auto-fix-python, auto-fix-javascript]
+    if: always() && (needs.auto-fix-python.outputs.changes_made == 'true' || needs.auto-fix-javascript.outputs.changes_made == 'true')
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Verify Python Fixes
+        id: verify_python
+        run: |
+          cd backend
+          pip install ruff black mypy -q
+
+          echo "🔍 Verifying Python fixes..."
+
+          # Check Ruff
+          if ruff check . 2>&1 | grep -q "error"; then
+            echo "python_clean=false" >> $GITHUB_OUTPUT
+            echo "❌ Python still has linting errors"
+          else
+            echo "python_clean=true" >> $GITHUB_OUTPUT
+            echo "✅ Python linting passed"
+          fi
+
+          # Check Black
+          if black --check . 2>&1 | grep -q "would reformat"; then
+            echo "format_clean=false" >> $GITHUB_OUTPUT
+            echo "❌ Python still has formatting issues"
+          else
+            echo "format_clean=true" >> $GITHUB_OUTPUT
+            echo "✅ Python formatting passed"
+          fi
+
+      - name: Verify JavaScript Fixes
+        id: verify_js
+        run: |
+          npm install -g eslint eslint-config-airbnb-base eslint-plugin-import
+
+          echo "🔍 Verifying JavaScript fixes..."
+
+          if [ -f ".eslintrc.json" ]; then
+            if eslint assets/*.js 2>&1 | grep -qE "error"; then
+              echo "js_clean=false" >> $GITHUB_OUTPUT
+              echo "❌ JavaScript still has linting errors"
+            else
+              echo "js_clean=true" >> $GITHUB_OUTPUT
+              echo "✅ JavaScript linting passed"
+            fi
+          else
+            echo "js_clean=true" >> $GITHUB_OUTPUT
+            echo "ℹ️  No ESLint config found, skipping"
+          fi
+
+      - name: Trigger CI Re-run
+        if: steps.verify_python.outputs.python_clean == 'true' && steps.verify_python.outputs.format_clean == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Find the Backend CI workflow
+            const workflows = await github.rest.actions.listRepoWorkflows({
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+
+            const backendCi = workflows.data.workflows.find(w => w.name === 'Backend CI/CD');
+
+            if (backendCi) {
+              await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: backendCi.id,
+                ref: '${{ github.ref }}'
+              });
+              console.log('✅ Triggered Backend CI/CD workflow re-run');
+            }
+
+  create-issue-on-failure:
+    name: Create Issue if Auto-Fix Failed
+    runs-on: ubuntu-latest
+    needs: [analyze-failure, auto-fix-python, auto-fix-javascript, verify-and-retry]
+    if: failure()
+
+    steps:
+      - name: Create Issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `[Self-Healing] Auto-Fix Failed - ${new Date().toISOString().split('T')[0]}`;
+
+            const body = `
+            ## 🔴 Self-Healing Auto-Fix Failed
+
+            The automatic build repair workflow was unable to fix all issues.
+
+            ### Error Summary
+            ${{ needs.analyze-failure.outputs.error_summary || 'Unknown errors' }}
+
+            ### What was attempted
+            - Python linting fixes (Ruff, Black, autoflake, isort)
+            - JavaScript linting fixes (ESLint)
+
+            ### Required Manual Action
+            1. Check the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            2. Review the error logs
+            3. Fix remaining issues manually
+            4. Push the fixes to trigger a new build
+
+            ### Affected Workflow
+            - Triggered by: ${{ github.event.workflow_run.name || 'Manual dispatch' }}
+            - Run ID: ${{ github.run_id }}
+
+            /cc @Darkness308
+            `;
+
+            // Check for existing open issue
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'self-healing,auto-fix-failed'
+            });
+
+            if (issues.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['self-healing', 'auto-fix-failed', 'bug']
+              });
+              console.log('Created issue for failed auto-fix');
+            } else {
+              // Add comment to existing issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues.data[0].number,
+                body: `### New Failure Detected\n\nRun ID: ${{ github.run_id }}\n\n${{ needs.analyze-failure.outputs.error_summary || 'Unknown errors' }}`
+              });
+              console.log('Added comment to existing issue');
+            }
+
+  summary:
+    name: Self-Healing Summary
+    runs-on: ubuntu-latest
+    needs: [analyze-failure, auto-fix-python, auto-fix-javascript, verify-and-retry]
+    if: always()
+
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "## 🔄 Self-Healing Build Repair Summary"
+          echo ""
+          echo "### Analysis Results"
+          echo "- Python Errors: ${{ needs.analyze-failure.outputs.has_python_errors }}"
+          echo "- JavaScript Errors: ${{ needs.analyze-failure.outputs.has_js_errors }}"
+          echo "- Format Errors: ${{ needs.analyze-failure.outputs.has_format_errors }}"
+          echo "- Type Errors: ${{ needs.analyze-failure.outputs.has_type_errors }}"
+          echo ""
+          echo "### Repair Actions"
+          echo "- Python Fixes Applied: ${{ needs.auto-fix-python.outputs.changes_made || 'skipped' }}"
+          echo "- JavaScript Fixes Applied: ${{ needs.auto-fix-javascript.outputs.changes_made || 'skipped' }}"
+          echo ""
+          echo "### Error Summary"
+          echo "${{ needs.analyze-failure.outputs.error_summary || 'No errors detected' }}"

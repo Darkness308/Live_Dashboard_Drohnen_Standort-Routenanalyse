@@ -1,0 +1,44 @@
+{
+  "$schema": "https://claude.ai/claude-code/settings.schema.json",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '📝 File modification detected - remember to run tests'"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '✅ Command executed'"
+          }
+        ]
+      }
+    ],
+    "PreCommit": [
+      {
+        "type": "command",
+        "command": "cd backend && ruff check . && black --check .",
+        "description": "Run Python linting before commit"
+      }
+    ]
+  },
+  "mcpServers": {},
+  "permissions": {
+    "allowBash": true,
+    "allowFileWrite": true,
+    "allowNetworkRequests": true,
+    "blockedCommands": [
+      "rm -rf /",
+      "git push --force origin main"
+    ]
+  }
+}
