@@ -1,0 +1,71 @@
+{
+  "$schema": "https://claude.ai/claude-code/settings.schema.json",
+  "project": {
+    "name": "MORPHEUS Dashboard",
+    "description": "Gerichtsfeste Drohnen-Lärmanalyse mit ISO 9613-2 und TA Lärm",
+    "language": "de"
+  },
+  "preferences": {
+    "autoCommit": false,
+    "commitMessageStyle": "conventional",
+    "testBeforeCommit": true,
+    "lintOnSave": true
+  },
+  "codeStyle": {
+    "python": {
+      "formatter": "black",
+      "linter": "ruff",
+      "typeChecker": "mypy",
+      "lineLength": 88,
+      "docstringStyle": "google"
+    },
+    "javascript": {
+      "style": "airbnb",
+      "linter": "eslint",
+      "indentSize": 2
+    }
+  },
+  "testing": {
+    "python": {
+      "framework": "pytest",
+      "coverageThreshold": 80
+    },
+    "runTestsOn": ["pre-commit", "pre-push"]
+  },
+  "security": {
+    "scanSecrets": true,
+    "allowedPatterns": [
+      "your_google_maps_api_key_here",
+      "YOUR_API_KEY",
+      "example",
+      "EXAMPLE"
+    ],
+    "blockedPatterns": [
+      "AIzaSy[0-9A-Za-z_-]{33}",
+      "-----BEGIN.*PRIVATE.*KEY-----"
+    ]
+  },
+  "compliance": {
+    "standards": [
+      "ISO 9613-2:1996",
+      "TA Lärm 1998",
+      "WCAG 2.1 AA",
+      "EU 2019/947"
+    ],
+    "gpsPrecision": 6,
+    "auditLogging": true
+  },
+  "integrations": {
+    "github": {
+      "autoCreatePR": false,
+      "prTemplate": ".github/PULL_REQUEST_TEMPLATE.md"
+    },
+    "ci": {
+      "requiredChecks": [
+        "backend-ci",
+        "code-quality",
+        "accessibility"
+      ]
+    }
+  }
+}
