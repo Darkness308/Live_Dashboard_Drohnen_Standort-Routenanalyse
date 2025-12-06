@@ -196,7 +196,7 @@ class GridCalculationInput(BaseModel):
     weather: Optional[WeatherInput] = None
 
     @validator("bbox")
-    def validate_bbox(cls, v):
+    def validate_bbox(self, v):
         xmin, ymin, xmax, ymax = v
         if xmin >= xmax or ymin >= ymax:
             raise ValueError("BBox: min-Werte müssen kleiner als max-Werte sein")
