@@ -1,6 +1,5 @@
 """
 MORPHEUS Backend API
-====================
 
 FastAPI-basierte REST-API für:
 - ISO 9613-2 Schallausbreitungsberechnung

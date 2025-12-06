@@ -26,24 +26,28 @@ try:
     import requests
     from requests.adapters import HTTPAdapter
     from urllib3.util.retry import Retry
+
     REQUESTS_AVAILABLE = True
 except ImportError:
     REQUESTS_AVAILABLE = False
 
 try:
     from owslib.wfs import WebFeatureService
+
     OWSLIB_AVAILABLE = True
 except ImportError:
     OWSLIB_AVAILABLE = False
 
 try:
     from shapely.geometry import shape
+
     SHAPELY_AVAILABLE = True
 except ImportError:
     SHAPELY_AVAILABLE = False
 
 try:
-    import pyproj
+    import pyproj  # noqa: F401
+
     PYPROJ_AVAILABLE = True
 except ImportError:
     PYPROJ_AVAILABLE = False
@@ -51,14 +55,14 @@ except ImportError:
 
 # Logger konfigurieren
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 
 class DataSource(Enum):
     """Verfügbare Datenquellen im Geoportal NRW."""
+
     ALKIS = "alkis"
     LAERMKARTIERUNG = "laermkartierung"
     CITYGML = "citygml"
@@ -67,6 +71,7 @@ class DataSource(Enum):
 
 class PropertyType(Enum):
     """Eigentumsarten nach ALKIS."""
+
     PRIVATE = "privat"
     PUBLIC = "oeffentlich"
     MIXED = "gemischt"
@@ -76,6 +81,7 @@ class PropertyType(Enum):
 @dataclass
 class WFSEndpoint:
     """Konfiguration eines WFS-Endpoints."""
+
     name: str
     url: str
     version: str = "2.0.0"
@@ -88,6 +94,7 @@ class WFSEndpoint:
 @dataclass
 class ALKISFlurstueck:
     """Repräsentiert ein ALKIS Flurstück."""
+
     gml_id: str
     flurstuecksnummer: str
     gemarkung: str
@@ -110,13 +117,14 @@ class ALKISFlurstueck:
             "kreis": self.kreis,
             "flaeche_qm": self.flaeche_qm,
             "eigentumsart": self.eigentumsart.value,
-            "geometry_wkt": self.geometry.wkt if self.geometry else None
+            "geometry_wkt": self.geometry.wkt if self.geometry else None,
         }
 
 
 @dataclass
 class NoiseMeasurement:
     """Lärmkartierungs-Messpunkt nach EU-Umgebungslärmrichtlinie."""
+
     id: str
     lden: float  # Tag-Abend-Nacht Lärmindex dB(A)
     lnight: float  # Nacht-Lärmindex dB(A)
@@ -132,13 +140,14 @@ class NoiseMeasurement:
             "lnight": self.lnight,
             "source_type": self.source_type,
             "year": self.year,
-            "geometry_wkt": self.geometry.wkt if self.geometry else None
+            "geometry_wkt": self.geometry.wkt if self.geometry else None,
         }
 
 
 @dataclass
 class AuditRecord:
     """Audit-Eintrag für gerichtsfeste Dokumentation."""
+
     timestamp: datetime
     data_source: DataSource
     endpoint_url: str
@@ -159,7 +168,7 @@ class AuditRecord:
             "record_count": self.record_count,
             "processing_time_ms": self.processing_time_ms,
             "success": self.success,
-            "error_message": self.error_message
+            "error_message": self.error_message,
         }
 
 
@@ -191,14 +200,14 @@ class NRWDataLoader:
             name="ALKIS Vereinfacht NRW",
             url="https://www.wfs.nrw.de/geobasis/wfs_nw_alkis_vereinfacht",
             typename="ave:Flurstueck",
-            version="2.0.0"
+            version="2.0.0",
         ),
         DataSource.LAERMKARTIERUNG: WFSEndpoint(
             name="Lärmkartierung NRW",
             url="https://www.wfs.nrw.de/umwelt/laermkartierung",
             typename="ms:lden_strasse",  # Beispiel: Straßenlärm
-            version="1.1.0"
-        )
+            version="1.1.0",
+        ),
     }
 
     # Alternative Endpoints für Fallback
@@ -207,11 +216,13 @@ class NRWDataLoader:
             name="ALKIS Fallback",
             url="https://www.wfs.nrw.de/geobasis/wfs_nw_alkis_aaa-modell-basiert",
             typename="ax:AX_Flurstueck",
-            version="2.0.0"
+            version="2.0.0",
         )
     }
 
-    def __init__(self, cache_dir: Optional[Path] = None, audit_log_path: Optional[Path] = None):
+    def __init__(
+        self, cache_dir: Optional[Path] = None, audit_log_path: Optional[Path] = None
+    ):
         """
         Initialisiert den NRW Data Loader.
 
@@ -268,7 +279,7 @@ class NRWDataLoader:
             total=3,
             backoff_factor=1,
             status_forcelist=[429, 500, 502, 503, 504],
-            allowed_methods=["HEAD", "GET", "POST"]
+            allowed_methods=["HEAD", "GET", "POST"],
         )
 
         adapter = HTTPAdapter(max_retries=retry_strategy)
@@ -276,10 +287,12 @@ class NRWDataLoader:
         session.mount("https://", adapter)
 
         # Standard Headers
-        session.headers.update({
-            "User-Agent": "MORPHEUS-DataLoader/0.1.0",
-            "Accept": "application/json, application/gml+xml"
-        })
+        session.headers.update(
+            {
+                "User-Agent": "MORPHEUS-DataLoader/0.1.0",
+                "Accept": "application/json, application/gml+xml",
+            }
+        )
 
         return session
 
@@ -299,7 +312,7 @@ class NRWDataLoader:
                 if not REQUESTS_AVAILABLE:
                     results[source.value] = {
                         "available": False,
-                        "error": "requests library not installed"
+                        "error": "requests library not installed",
                     }
                     continue
 
@@ -307,13 +320,11 @@ class NRWDataLoader:
                 params = {
                     "service": "WFS",
                     "version": endpoint.version,
-                    "request": "GetCapabilities"
+                    "request": "GetCapabilities",
                 }
 
                 response = self.session.get(
-                    endpoint.url,
-                    params=params,
-                    timeout=endpoint.timeout
+                    endpoint.url, params=params, timeout=endpoint.timeout
                 )
 
                 elapsed_ms = (datetime.now() - start_time).total_seconds() * 1000
@@ -328,16 +339,18 @@ class NRWDataLoader:
                         "version": endpoint.version,
                         "response_time_ms": round(elapsed_ms, 2),
                         "layers_count": len(available_layers),
-                        "sample_layers": available_layers[:5]
+                        "sample_layers": available_layers[:5],
                     }
 
-                    logger.info(f"✓ {endpoint.name}: {len(available_layers)} Layer verfügbar")
+                    logger.info(
+                        f"✓ {endpoint.name}: {len(available_layers)} Layer verfügbar"
+                    )
                 else:
                     results[source.value] = {
                         "available": False,
                         "url": endpoint.url,
                         "status_code": response.status_code,
-                        "error": f"HTTP {response.status_code}"
+                        "error": f"HTTP {response.status_code}",
                     }
                     logger.warning(f"✗ {endpoint.name}: HTTP {response.status_code}")
 
@@ -345,7 +358,7 @@ class NRWDataLoader:
                 results[source.value] = {
                     "available": False,
                     "url": endpoint.url,
-                    "error": str(e)
+                    "error": str(e),
                 }
                 logger.error(f"✗ {endpoint.name}: {e}")
 
@@ -359,21 +372,18 @@ class NRWDataLoader:
         import re
 
         # WFS 2.0 Pattern
-        pattern = r'<(?:wfs:)?Name>([^<]+)</(?:wfs:)?Name>'
+        pattern = r"<(?:wfs:)?Name>([^<]+)</(?:wfs:)?Name>"
         matches = re.findall(pattern, xml_content)
 
         # Filtere nur relevante Layer
         for match in matches:
-            if match and not match.startswith('wfs:') and ':' in match:
+            if match and not match.startswith("wfs:") and ":" in match:
                 layers.append(match)
 
         return layers
 
     def load_alkis_data(
-        self,
-        bbox: tuple,
-        srs: str = "EPSG:25832",
-        max_features: int = 1000
+        self, bbox: tuple, srs: str = "EPSG:25832", max_features: int = 1000
     ) -> List[ALKISFlurstueck]:
         """
         Lädt ALKIS Flurstücksdaten für einen Bounding Box.
@@ -407,19 +417,17 @@ class NRWDataLoader:
                 query_parameters={"bbox": bbox, "srs": srs},
                 response_hash="",
                 record_count=0,
-                processing_time_ms=int((datetime.now() - start_time).total_seconds() * 1000),
+                processing_time_ms=int(
+                    (datetime.now() - start_time).total_seconds() * 1000
+                ),
                 success=False,
-                error_message=str(e)
+                error_message=str(e),
             )
 
             return []
 
     def _load_alkis_via_owslib(
-        self,
-        endpoint: WFSEndpoint,
-        bbox: tuple,
-        srs: str,
-        max_features: int
+        self, endpoint: WFSEndpoint, bbox: tuple, srs: str, max_features: int
     ) -> List[ALKISFlurstueck]:
         """Lädt ALKIS via OWSLib."""
         wfs = WebFeatureService(url=endpoint.url, version=endpoint.version)
@@ -429,18 +437,14 @@ class NRWDataLoader:
             bbox=bbox,
             srsname=srs,
             maxfeatures=max_features,
-            outputFormat='application/json'
+            outputFormat="application/json",
         )
 
         data = json.loads(response.read())
         return self._parse_alkis_geojson(data)
 
     def _load_alkis_via_requests(
-        self,
-        endpoint: WFSEndpoint,
-        bbox: tuple,
-        srs: str,
-        max_features: int
+        self, endpoint: WFSEndpoint, bbox: tuple, srs: str, max_features: int
     ) -> List[ALKISFlurstueck]:
         """Lädt ALKIS via direktem HTTP Request."""
         if not REQUESTS_AVAILABLE:
@@ -455,13 +459,11 @@ class NRWDataLoader:
             "srsname": srs,
             "bbox": f"{bbox[0]},{bbox[1]},{bbox[2]},{bbox[3]},{srs}",
             "maxFeatures": max_features,
-            "outputFormat": "application/json"
+            "outputFormat": "application/json",
         }
 
         response = self.session.get(
-            endpoint.url,
-            params=params,
-            timeout=endpoint.timeout
+            endpoint.url, params=params, timeout=endpoint.timeout
         )
 
         if response.status_code != 200:
@@ -474,11 +476,11 @@ class NRWDataLoader:
         """Parst GeoJSON zu ALKISFlurstueck Objekten."""
         flurstuecke = []
 
-        features = geojson.get('features', [])
+        features = geojson.get("features", [])
 
         for feature in features:
-            props = feature.get('properties', {})
-            geom = feature.get('geometry')
+            props = feature.get("properties", {})
+            geom = feature.get("geometry")
 
             # Eigentumsart bestimmen
             eigentumsart = self._classify_property_type(props)
@@ -490,19 +492,21 @@ class NRWDataLoader:
                     geometry = shape(geom)
                 except Exception as e:
                     # GeoJSON Geometrie kann fehlerhaft sein; Fehler protokollieren und Flurstück ohne Geometrie weiterverarbeiten
-                    logger.warning(f"Fehler beim Parsen der Geometrie für Flurstück (ID: {props.get('gml_id', feature.get('id', ''))}): {e}")
+                    logger.warning(
+                        f"Fehler beim Parsen der Geometrie für Flurstück (ID: {props.get('gml_id', feature.get('id', ''))}): {e}"
+                    )
 
             flurstueck = ALKISFlurstueck(
-                gml_id=props.get('gml_id', feature.get('id', '')),
-                flurstuecksnummer=props.get('flurstueckskennzeichen', ''),
-                gemarkung=props.get('gemarkung', ''),
-                gemarkungsnummer=props.get('gemarkungsnummer', ''),
-                gemeinde=props.get('gemeinde', ''),
-                kreis=props.get('kreis', ''),
-                flaeche_qm=float(props.get('flaeche', 0)),
+                gml_id=props.get("gml_id", feature.get("id", "")),
+                flurstuecksnummer=props.get("flurstueckskennzeichen", ""),
+                gemarkung=props.get("gemarkung", ""),
+                gemarkungsnummer=props.get("gemarkungsnummer", ""),
+                gemeinde=props.get("gemeinde", ""),
+                kreis=props.get("kreis", ""),
+                flaeche_qm=float(props.get("flaeche", 0)),
                 eigentumsart=eigentumsart,
                 geometry=geometry,
-                raw_data=props
+                raw_data=props,
             )
 
             flurstuecke.append(flurstueck)
@@ -518,18 +522,35 @@ class NRWDataLoader:
         - Öffentlich: Straßen, Wege, Gewässer, öffentliche Gebäude
         - Privat: Wohnbauflächen, Gewerbeflächen
         """
-        nutzung = properties.get('tatsaechlichenutzung', '').lower()
-        art = properties.get('art', '').lower()
+        nutzung = properties.get("tatsaechlichenutzung", "").lower()
+        art = properties.get("art", "").lower()
 
         public_keywords = [
-            'strasse', 'weg', 'platz', 'gewaesser', 'bach', 'fluss',
-            'oeffentlich', 'gemeinde', 'stadt', 'land', 'bund',
-            'schule', 'kirche', 'friedhof', 'park', 'gruen'
+            "strasse",
+            "weg",
+            "platz",
+            "gewaesser",
+            "bach",
+            "fluss",
+            "oeffentlich",
+            "gemeinde",
+            "stadt",
+            "land",
+            "bund",
+            "schule",
+            "kirche",
+            "friedhof",
+            "park",
+            "gruen",
         ]
 
         private_keywords = [
-            'wohn', 'gewerbe', 'industrie', 'landwirtschaft',
-            'garten', 'privat'
+            "wohn",
+            "gewerbe",
+            "industrie",
+            "landwirtschaft",
+            "garten",
+            "privat",
         ]
 
         combined = f"{nutzung} {art}"
@@ -542,10 +563,7 @@ class NRWDataLoader:
             return PropertyType.UNKNOWN
 
     def load_noise_data(
-        self,
-        bbox: tuple,
-        noise_type: str = "strasse",
-        srs: str = "EPSG:25832"
+        self, bbox: tuple, noise_type: str = "strasse", srs: str = "EPSG:25832"
     ) -> List[NoiseMeasurement]:
         """
         Lädt Lärmkartierungsdaten für einen Bereich.
@@ -565,7 +583,7 @@ class NRWDataLoader:
             "strasse": "ms:lden_strasse",
             "schiene": "ms:lden_schiene",
             "flug": "ms:lden_flugverkehr",
-            "industrie": "ms:lden_industrie"
+            "industrie": "ms:lden_industrie",
         }
 
         typename = typename_map.get(noise_type, typename_map["strasse"])
@@ -583,35 +601,37 @@ class NRWDataLoader:
                 "typename": typename,
                 "srsname": srs,
                 "bbox": f"{bbox[0]},{bbox[1]},{bbox[2]},{bbox[3]},{srs}",
-                "outputFormat": "application/json"
+                "outputFormat": "application/json",
             }
 
             response = self.session.get(
-                endpoint.url,
-                params=params,
-                timeout=endpoint.timeout
+                endpoint.url, params=params, timeout=endpoint.timeout
             )
 
             if response.status_code == 200:
                 data = response.json()
                 return self._parse_noise_geojson(data, noise_type)
             else:
-                logger.warning(f"Lärmkartierung Request failed: HTTP {response.status_code}")
+                logger.warning(
+                    f"Lärmkartierung Request failed: HTTP {response.status_code}"
+                )
                 return []
 
         except Exception as e:
             logger.error(f"Lärmkartierung Laden fehlgeschlagen: {e}")
             return []
 
-    def _parse_noise_geojson(self, geojson: Dict, source_type: str) -> List[NoiseMeasurement]:
+    def _parse_noise_geojson(
+        self, geojson: Dict, source_type: str
+    ) -> List[NoiseMeasurement]:
         """Parst Lärmkartierungs-GeoJSON."""
         measurements = []
 
-        features = geojson.get('features', [])
+        features = geojson.get("features", [])
 
         for feature in features:
-            props = feature.get('properties', {})
-            geom = feature.get('geometry')
+            props = feature.get("properties", {})
+            geom = feature.get("geometry")
 
             geometry = None
             if SHAPELY_AVAILABLE and geom:
@@ -622,13 +642,13 @@ class NRWDataLoader:
                     logger.debug(f"Fehler beim Parsen der Geometrie: {e}")
 
             measurement = NoiseMeasurement(
-                id=props.get('gml_id', feature.get('id', '')),
-                lden=float(props.get('lden', props.get('db_lden', 0))),
-                lnight=float(props.get('lnight', props.get('db_lnight', 0))),
+                id=props.get("gml_id", feature.get("id", "")),
+                lden=float(props.get("lden", props.get("db_lden", 0))),
+                lnight=float(props.get("lnight", props.get("db_lnight", 0))),
                 source_type=source_type,
-                year=int(props.get('jahr', props.get('year', 2022))),
+                year=int(props.get("jahr", props.get("year", 2022))),
                 geometry=geometry,
-                grid_cell_id=props.get('grid_id')
+                grid_cell_id=props.get("grid_id"),
             )
 
             measurements.append(measurement)
@@ -645,7 +665,7 @@ class NRWDataLoader:
         record_count: int,
         processing_time_ms: int,
         success: bool,
-        error_message: Optional[str] = None
+        error_message: Optional[str] = None,
     ):
         """Schreibt einen Audit-Eintrag für gerichtsfeste Dokumentation."""
         record = AuditRecord(
@@ -657,15 +677,15 @@ class NRWDataLoader:
             record_count=record_count,
             processing_time_ms=processing_time_ms,
             success=success,
-            error_message=error_message
+            error_message=error_message,
         )
 
         self.audit_records.append(record)
 
         # In Datei schreiben
         try:
-            with open(self.audit_log_path, 'a') as f:
-                f.write(json.dumps(record.to_dict()) + '\n')
+            with open(self.audit_log_path, "a") as f:
+                f.write(json.dumps(record.to_dict()) + "\n")
         except Exception as e:
             logger.error(f"Audit-Log Schreiben fehlgeschlagen: {e}")
 
@@ -684,13 +704,16 @@ class ALKISLoader(NRWDataLoader):
 class NoiseMapLoader(NRWDataLoader):
     """Spezialisierter Loader nur für Lärmkartierung."""
 
-    def load(self, bbox: tuple, noise_type: str = "strasse", **kwargs) -> List[NoiseMeasurement]:
+    def load(
+        self, bbox: tuple, noise_type: str = "strasse", **kwargs
+    ) -> List[NoiseMeasurement]:
         return self.load_noise_data(bbox, noise_type, **kwargs)
 
 
 # ============================================================================
 # CLI Interface
 # ============================================================================
+
 
 def main():
     """CLI Hauptfunktion zum Testen der WFS-Verbindungen."""
@@ -700,26 +723,15 @@ def main():
         description="NRW Geoportal Data Loader - Prüft WFS-Dienste"
     )
     parser.add_argument(
-        '--check',
-        action='store_true',
-        help='Prüft die Verfügbarkeit aller WFS-Dienste'
+        "--check", action="store_true", help="Prüft die Verfügbarkeit aller WFS-Dienste"
     )
     parser.add_argument(
-        '--bbox',
-        type=str,
-        help='Bounding Box für Datenabfrage (minx,miny,maxx,maxy)'
+        "--bbox", type=str, help="Bounding Box für Datenabfrage (minx,miny,maxx,maxy)"
     )
     parser.add_argument(
-        '--type',
-        choices=['alkis', 'noise'],
-        default='alkis',
-        help='Datentyp zum Laden'
+        "--type", choices=["alkis", "noise"], default="alkis", help="Datentyp zum Laden"
     )
-    parser.add_argument(
-        '--output',
-        type=str,
-        help='Output-Datei für Ergebnisse (JSON)'
-    )
+    parser.add_argument("--output", type=str, help="Output-Datei für Ergebnisse (JSON)")
 
     args = parser.parse_args()
 
@@ -730,12 +742,12 @@ def main():
         status = loader.check_service_availability()
 
         for service, info in status.items():
-            if info.get('available'):
+            if info.get("available"):
                 print(f"✓ {service.upper()}")
                 print(f"  URL: {info['url']}")
                 print(f"  Response Time: {info['response_time_ms']}ms")
                 print(f"  Layers: {info['layers_count']}")
-                if info.get('sample_layers'):
+                if info.get("sample_layers"):
                     print(f"  Sample Layers: {', '.join(info['sample_layers'][:3])}")
             else:
                 print(f"✗ {service.upper()}")
@@ -743,23 +755,23 @@ def main():
             print()
 
     elif args.bbox:
-        bbox = tuple(map(float, args.bbox.split(',')))
+        bbox = tuple(map(float, args.bbox.split(",")))
 
-        if args.type == 'alkis':
+        if args.type == "alkis":
             data = loader.load_alkis_data(bbox)
             print(f"\nGeladene Flurstücke: {len(data)}")
 
             if args.output:
-                with open(args.output, 'w') as f:
+                with open(args.output, "w") as f:
                     json.dump([d.to_dict() for d in data], f, indent=2)
                 print(f"Gespeichert in: {args.output}")
 
-        elif args.type == 'noise':
+        elif args.type == "noise":
             data = loader.load_noise_data(bbox)
             print(f"\nGeladene Lärm-Messpunkte: {len(data)}")
 
             if args.output:
-                with open(args.output, 'w') as f:
+                with open(args.output, "w") as f:
                     json.dump([d.to_dict() for d in data], f, indent=2)
                 print(f"Gespeichert in: {args.output}")
 
