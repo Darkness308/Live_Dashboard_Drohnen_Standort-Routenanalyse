@@ -1,0 +1,123 @@
+# =============================================================================
+# MORPHEUS Dashboard - Docker Compose
+# =============================================================================
+# Entwicklungs- und Produktionskonfiguration
+#
+# Entwicklung:  docker-compose up -d
+# Produktion:   docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Logs:         docker-compose logs -f backend
+# Tests:        docker-compose exec backend pytest
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ---------------------------------------------------------------------------
+  # Backend API (FastAPI + ISO 9613-2)
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: morpheus-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - backend-cache:/app/cache
+      - backend-logs:/app/logs
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+      - LOG_LEVEL=INFO
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - morpheus-network
+
+  # ---------------------------------------------------------------------------
+  # Frontend (Static Files + Reverse Proxy)
+  # ---------------------------------------------------------------------------
+  frontend:
+    image: nginx:alpine
+    container_name: morpheus-frontend
+    ports:
+      - "3000:80"
+    volumes:
+      - ./index.html:/usr/share/nginx/html/index.html:ro
+      - ./dashboard.html:/usr/share/nginx/html/dashboard.html:ro
+      - ./assets:/usr/share/nginx/html/assets:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - morpheus-network
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL + PostGIS (Geodatenbank)
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgis/postgis:15-3.3-alpine
+    container_name: morpheus-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=morpheus
+      - POSTGRES_PASSWORD=morpheus_dev_password
+      - POSTGRES_DB=morpheus
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U morpheus -d morpheus"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - morpheus-network
+
+  # ---------------------------------------------------------------------------
+  # Redis (Cache & Session Store)
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: morpheus-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - morpheus-network
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  backend-cache:
+    driver: local
+  backend-logs:
+    driver: local
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  morpheus-network:
+    driver: bridge
