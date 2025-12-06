@@ -260,13 +260,13 @@ class BBoxInput(BaseModel):
     srs: str = Field("EPSG:4326", description="Koordinatenreferenzsystem")
 
     @validator("xmax")
-    def validate_xmax(cls, v, values):
+    def validate_xmax(self, v, values):
         if "xmin" in values and v <= values["xmin"]:
             raise ValueError("xmax muss größer als xmin sein")
         return v
 
     @validator("ymax")
-    def validate_ymax(cls, v, values):
+    def validate_ymax(self, v, values):
         if "ymin" in values and v <= values["ymin"]:
             raise ValueError("ymax muss größer als ymin sein")
         return v
