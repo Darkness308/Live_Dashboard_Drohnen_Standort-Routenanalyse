@@ -10,7 +10,7 @@ from .schemas import (
     FlightRoute,
     NoiseCalculationRequest,
     NoiseCalculationResult,
-    ComplianceReport
+    ComplianceReport,
 )
 
 __all__ = [
@@ -18,5 +18,5 @@ __all__ = [
     "FlightRoute",
     "NoiseCalculationRequest",
     "NoiseCalculationResult",
-    "ComplianceReport"
+    "ComplianceReport",
 ]

@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
 
 class GroundType(Enum):
     """Bodentypen nach ISO 9613-2."""
+
     HARD = "hard"  # G = 0: Asphalt, Beton, Wasser
     SOFT = "soft"  # G = 1: Gras, Wald, Ackerland
     MIXED = "mixed"  # G = 0.5: Gemischt
@@ -39,6 +40,7 @@ class GroundType(Enum):
 
 class AtmosphericCondition(Enum):
     """Atmosphärische Bedingungen."""
+
     FAVORABLE = "favorable"  # Mitwind/Temperaturinversion
     NEUTRAL = "neutral"
     UNFAVORABLE = "unfavorable"  # Gegenwind
@@ -55,6 +57,7 @@ class NoiseSource:
         directivity: Richtcharakteristik Dc in dB (default 0)
         frequency_spectrum: Optional, Spektrum in Oktavbändern
     """
+
     lw: float  # Schallleistungspegel dB(A)
     x: float
     y: float
@@ -69,12 +72,20 @@ class NoiseSource:
         """Erstellt eine typische Drohnen-Schallquelle."""
         return cls(
             lw=75.0,  # Typisch für kleine Lieferdrohne
-            x=x, y=y, z=z,
+            x=x,
+            y=y,
+            z=z,
             name="Auriol X5",
             frequency_spectrum={
-                63: 55, 125: 60, 250: 68, 500: 72,
-                1000: 75, 2000: 73, 4000: 70, 8000: 65
-            }
+                63: 55,
+                125: 60,
+                250: 68,
+                500: 72,
+                1000: 75,
+                2000: 73,
+                4000: 70,
+                8000: 65,
+            },
         )
 
 
@@ -87,6 +98,7 @@ class Receiver:
         x, y, z: Position in Metern
         height: Höhe des Immissionspunkts über Grund
     """
+
     x: float
     y: float
     z: float = 4.0  # Standard: 4m über Grund (Fenster OG)
@@ -97,6 +109,7 @@ class Receiver:
 @dataclass
 class WeatherConditions:
     """Meteorologische Bedingungen für die Berechnung."""
+
     temperature_celsius: float = 15.0
     relative_humidity_percent: float = 70.0
     atmospheric_pressure_hpa: float = 1013.25
@@ -108,6 +121,7 @@ class WeatherConditions:
 @dataclass
 class Obstacle:
     """Hindernis für Abschirmungsberechnung (Gebäude, Wand)."""
+
     x: float
     y: float
     height: float
@@ -123,6 +137,7 @@ class AttenuationResult:
 
     Enthält alle Komponenten nach ISO 9613-2.
     """
+
     # Eingangswerte
     source_lw: float
     distance_m: float
@@ -152,11 +167,11 @@ class AttenuationResult:
                 "ground_gr": round(self.a_gr, 1),
                 "barrier_bar": round(self.a_bar, 1),
                 "misc": round(self.a_misc, 1),
-                "total": round(self.total_attenuation, 1)
+                "total": round(self.total_attenuation, 1),
             },
             "result_spl_dba": round(self.sound_pressure_level, 1),
             "method": self.calculation_method,
-            "notes": self.notes
+            "notes": self.notes,
         }
 
 
@@ -184,7 +199,7 @@ class ISO9613Calculator:
         1000: 3.7,
         2000: 9.7,
         4000: 32.8,
-        8000: 117.0
+        8000: 117.0,
     }
 
     def __init__(self, weather: Optional[WeatherConditions] = None):
@@ -202,7 +217,7 @@ class ISO9613Calculator:
         source: NoiseSource,
         receiver: Receiver,
         obstacles: Optional[List[Obstacle]] = None,
-        octave_bands: bool = False
+        octave_bands: bool = False,
     ) -> AttenuationResult:
         """
         Berechnet den Schallpegel am Empfänger.
@@ -237,7 +252,9 @@ class ISO9613Calculator:
         if d < 1:
             notes.append("Warnung: Sehr kurze Distanz, Nahfeld-Effekte möglich")
         if source.z > 100:
-            notes.append("Hinweis: Große Quellhöhe, vereinfachte Bodeneffekt-Berechnung")
+            notes.append(
+                "Hinweis: Große Quellhöhe, vereinfachte Bodeneffekt-Berechnung"
+            )
 
         result = AttenuationResult(
             source_lw=source.lw,
@@ -249,7 +266,7 @@ class ISO9613Calculator:
             a_misc=a_misc,
             total_attenuation=total_a,
             sound_pressure_level=lat,
-            notes=notes
+            notes=notes,
         )
 
         logger.debug(f"Berechnung: {source.name} -> {receiver.name}: {lat:.1f} dB(A)")
@@ -277,10 +294,7 @@ class ISO9613Calculator:
         return 20 * math.log10(distance) + 11
 
     def _atmospheric_absorption(
-        self,
-        distance: float,
-        octave_bands: bool,
-        source: NoiseSource
+        self, distance: float, octave_bands: bool, source: NoiseSource
     ) -> float:
         """
         Berechnet die atmosphärische Absorption Aatm.
@@ -304,10 +318,7 @@ class ISO9613Calculator:
             return alpha_a * (distance / 1000)
 
     def _ground_effect(
-        self,
-        source: NoiseSource,
-        receiver: Receiver,
-        distance: float
+        self, source: NoiseSource, receiver: Receiver, distance: float
     ) -> float:
         """
         Berechnet den Bodeneffekt Agr nach ISO 9613-2.
@@ -318,8 +329,8 @@ class ISO9613Calculator:
         """
         hs = source.z  # Quellhöhe
         hr = receiver.z  # Empfängerhöhe
-        
-        diff_sq = distance**2 - (hs - hr)**2
+
+        diff_sq = distance**2 - (hs - hr) ** 2
         if diff_sq < 0:
             # Physikalisch nicht möglich, Rückgabe 0
             return 0
@@ -329,8 +340,11 @@ class ISO9613Calculator:
         # Mittlere Höhe über dem Ausbreitungsweg
         hm = (hs + hr) / 2
         # Bodenfaktor G (0=hart, 1=weich)
-        g = 0.5 if receiver.ground_type == GroundType.MIXED else \
-            0.0 if receiver.ground_type == GroundType.HARD else 1.0
+        g = (
+            0.5
+            if receiver.ground_type == GroundType.MIXED
+            else 0.0 if receiver.ground_type == GroundType.HARD else 1.0
+        )
         # Vereinfachte Formel für mittlere Frequenzen
         # Agr = 4.8 - (2*hm/d) * [17 + (300/d)]
         a_gr = 4.8 - (2 * hm / dp) * (17 + 300 / dp)
@@ -339,10 +353,7 @@ class ISO9613Calculator:
         return a_gr
 
     def _barrier_attenuation(
-        self,
-        source: NoiseSource,
-        receiver: Receiver,
-        obstacles: List[Obstacle]
+        self, source: NoiseSource, receiver: Receiver, obstacles: List[Obstacle]
     ) -> float:
         """
         Berechnet die Abschirmung durch Hindernisse Abar.
@@ -366,14 +377,14 @@ class ISO9613Calculator:
 
             # Distanz über Hindernis (vereinfacht: über Oberkante)
             d_to_obstacle = math.sqrt(
-                (obstacle.x - source.x)**2 +
-                (obstacle.y - source.y)**2 +
-                (obstacle.height - source.z)**2
+                (obstacle.x - source.x) ** 2
+                + (obstacle.y - source.y) ** 2
+                + (obstacle.height - source.z) ** 2
             )
             d_from_obstacle = math.sqrt(
-                (receiver.x - obstacle.x)**2 +
-                (receiver.y - obstacle.y)**2 +
-                (receiver.z - obstacle.height)**2
+                (receiver.x - obstacle.x) ** 2
+                + (receiver.y - obstacle.y) ** 2
+                + (receiver.z - obstacle.height) ** 2
             )
 
             delta = d_to_obstacle + d_from_obstacle - d_direct
@@ -398,7 +409,7 @@ class ISO9613Calculator:
         source: NoiseSource,
         bbox: Tuple[float, float, float, float],
         grid_size: float = 10.0,
-        receiver_height: float = 4.0
+        receiver_height: float = 4.0,
     ) -> List[Dict]:
         """
         Berechnet ein Lärmraster für einen Bereich.
@@ -422,13 +433,15 @@ class ISO9613Calculator:
                 receiver = Receiver(x=x, y=y, z=receiver_height)
                 result = self.calculate(source, receiver)
 
-                results.append({
-                    "x": x,
-                    "y": y,
-                    "z": receiver_height,
-                    "spl_dba": round(result.sound_pressure_level, 1),
-                    "distance_m": round(result.distance_m, 1)
-                })
+                results.append(
+                    {
+                        "x": x,
+                        "y": y,
+                        "z": receiver_height,
+                        "spl_dba": round(result.sound_pressure_level, 1),
+                        "distance_m": round(result.distance_m, 1),
+                    }
+                )
 
                 y += grid_size
             x += grid_size
@@ -440,6 +453,7 @@ class ISO9613Calculator:
 # ============================================================================
 # TA Lärm Grenzwert-Prüfung
 # ============================================================================
+
 
 class TALaermChecker:
     """Prüft Einhaltung der TA Lärm Grenzwerte."""
@@ -453,15 +467,12 @@ class TALaermChecker:
         "allgemeines_wohngebiet": {"tag": 55, "nacht": 40},
         "reines_wohngebiet": {"tag": 50, "nacht": 35},
         "kurgebiet": {"tag": 45, "nacht": 35},
-        "krankenhaus": {"tag": 45, "nacht": 35}
+        "krankenhaus": {"tag": 45, "nacht": 35},
     }
 
     @classmethod
     def check_compliance(
-        cls,
-        spl: float,
-        zone_type: str,
-        is_night: bool = False
+        cls, spl: float, zone_type: str, is_night: bool = False
     ) -> Dict[str, Any]:
         """
         Prüft ob ein Schallpegel den TA Lärm Grenzwert einhält.
@@ -487,13 +498,14 @@ class TALaermChecker:
             "margin_db": round(margin, 1),
             "zone_type": zone_type,
             "time_period": "nacht" if is_night else "tag",
-            "status": "KONFORM" if compliant else "ÜBERSCHREITUNG"
+            "status": "KONFORM" if compliant else "ÜBERSCHREITUNG",
         }
 
 
 # ============================================================================
 # CLI Interface
 # ============================================================================
+
 
 def main():
     """Demo der ISO 9613-2 Berechnung."""
@@ -517,8 +529,7 @@ def main():
         result = calc.calculate(source, receiver)
 
         compliance = TALaermChecker.check_compliance(
-            result.sound_pressure_level,
-            "allgemeines_wohngebiet"
+            result.sound_pressure_level, "allgemeines_wohngebiet"
         )
 
         status = "✓" if compliance["compliant"] else "✗"
@@ -531,11 +542,7 @@ def main():
         )
 
     print("\n--- Rasterberechnung ---\n")
-    grid = calc.calculate_grid(
-        source,
-        bbox=(-100, -100, 100, 100),
-        grid_size=50
-    )
+    grid = calc.calculate_grid(source, bbox=(-100, -100, 100, 100), grid_size=50)
     print(f"Berechnete Rasterpunkte: {len(grid)}")
 
 

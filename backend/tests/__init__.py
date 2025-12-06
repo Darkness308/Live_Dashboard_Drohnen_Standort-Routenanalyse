@@ -1,6 +1,5 @@
 """
 MORPHEUS Backend Test Suite
-===========================
 
 Unit- und Integrationstests für:
 - ISO 9613-2 Schallausbreitungsberechnung
