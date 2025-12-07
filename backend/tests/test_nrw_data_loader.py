@@ -501,7 +501,7 @@ class TestErrorHandling:
 
         # Loader fängt Fehler ab und gibt leere Liste zurück
         result = loader.load_alkis_data(bbox=sample_bbox)
-        assert result == [] or isinstance(result, list)
+        assert result == []
 
 
 # =============================================================================
