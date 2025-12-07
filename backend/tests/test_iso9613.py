@@ -13,20 +13,20 @@ Referenzen:
 - TA Lärm 1998 Anhang A.2
 """
 
-import pytest
 import math
+
+import pytest
+
 from backend.calculations.iso9613 import (
-    ISO9613Calculator,
-    NoiseSource,
-    Receiver,
-    WeatherConditions,
-    Obstacle,
     AttenuationResult,
     GroundType,
-    AtmosphericCondition,
+    ISO9613Calculator,
+    NoiseSource,
+    Obstacle,
+    Receiver,
     TALaermChecker,
+    WeatherConditions,
 )
-
 
 # =============================================================================
 # Fixtures

@@ -6,9 +6,10 @@ Validierte Datenmodelle für API und Berechnungen.
 """
 
 from datetime import datetime
-from typing import Optional, List, Dict, Any, Literal
-from pydantic import BaseModel, Field, validator
 from enum import Enum
+from typing import Any, Dict, List, Literal, Optional
+
+from pydantic import BaseModel, Field, validator
 
 
 class ZoneType(str, Enum):

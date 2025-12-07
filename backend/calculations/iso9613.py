@@ -21,11 +21,11 @@ Referenzen:
 - TA Lärm Anhang A.2
 """
 
-import math
 import logging
+import math
 from dataclasses import dataclass, field
-from typing import Optional, List, Tuple, Dict, Any
 from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
