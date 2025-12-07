@@ -9,6 +9,6 @@ Anbindung an amtliche Geodaten-Dienste:
 - DWD Wetterdaten
 """
 
-from .nrw_data_loader import NRWDataLoader, ALKISLoader, NoiseMapLoader
+from .nrw_data_loader import ALKISLoader, NoiseMapLoader, NRWDataLoader
 
 __all__ = ["NRWDataLoader", "ALKISLoader", "NoiseMapLoader"]

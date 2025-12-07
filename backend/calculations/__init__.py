@@ -7,6 +7,6 @@ Implementiert akustische Berechnungen nach:
 - TA Lärm: Technische Anleitung zum Schutz gegen Lärm
 """
 
-from .iso9613 import ISO9613Calculator, NoiseSource, Receiver, AttenuationResult
+from .iso9613 import AttenuationResult, ISO9613Calculator, NoiseSource, Receiver
 
 __all__ = ["ISO9613Calculator", "NoiseSource", "Receiver", "AttenuationResult"]
