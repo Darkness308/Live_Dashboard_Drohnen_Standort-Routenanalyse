@@ -14,27 +14,24 @@ Referenzen:
 - OGC WFS 2.0 Standard
 """
 
-import pytest
-from unittest.mock import Mock, patch
-from pathlib import Path
-from datetime import datetime
 import json
 import tempfile
+from datetime import datetime
+from pathlib import Path
+from unittest.mock import Mock, patch
 
-from backend.integrations.nrw_data_loader import NRWDataLoader, DataSource, AuditRecord
+import pytest
+
+from backend.integrations.nrw_data_loader import AuditRecord, DataSource, NRWDataLoader
 
 
 # Custom Exceptions für Tests (falls nicht im Original definiert)
 class WFSServiceError(Exception):
     """WFS Service nicht erreichbar oder Fehler."""
 
-    pass
-
 
 class DataValidationError(ValueError):
     """Datenvalidierungsfehler."""
-
-    pass
 
 
 # =============================================================================

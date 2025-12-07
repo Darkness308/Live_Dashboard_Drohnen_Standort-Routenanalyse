@@ -5,9 +5,10 @@ Pytest Conftest - Shared Fixtures
 Gemeinsame Fixtures für alle Tests.
 """
 
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 
 # Backend zum Python-Pfad hinzufügen
 backend_path = Path(__file__).parent.parent

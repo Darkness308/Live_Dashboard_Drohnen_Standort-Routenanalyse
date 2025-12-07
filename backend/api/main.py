@@ -12,14 +12,15 @@ Start:
     uvicorn backend.api.main:app --reload --port 8000
 """
 
-from fastapi import FastAPI, Request, status
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from fastapi.openapi.utils import get_openapi
-from contextlib import asynccontextmanager
 import logging
 import time
+from contextlib import asynccontextmanager
 from typing import AsyncGenerator
+
+from fastapi import FastAPI, Request, status
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.utils import get_openapi
+from fastapi.responses import JSONResponse
 
 from .routes import router as api_router
 
