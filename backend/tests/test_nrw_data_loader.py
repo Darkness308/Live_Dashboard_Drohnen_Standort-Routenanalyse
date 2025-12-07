@@ -470,7 +470,7 @@ class TestErrorHandling:
         # Loader wirft RuntimeError bei HTTP-Fehlern, oder gibt leere Liste zurück
         result = loader.load_alkis_data(bbox=sample_bbox)
         # Bei Fehlern wird leere Liste zurückgegeben
-        assert result == [] or isinstance(result, list)
+        assert result == []
 
     @patch("requests.Session.get")
     def test_network_error_retry(
