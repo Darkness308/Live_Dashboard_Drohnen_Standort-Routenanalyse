@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="MORPHEUS Dashboard - Interaktives Karten-Dashboard mit Flottenüberwachung und TA-Lärm Monitoring">
-    <meta name="keywords" content="Drohnen, Dashboard, TA Lärm, Routenoptimierung, MORPHEUS, Leaflet, Flotten-Tracking">
+    <meta name="description" content="MORPHEUS Dashboard - Interaktives Karten-Dashboard mit Google Maps 3D und Leaflet">
+    <meta name="keywords" content="Drohnen, Dashboard, TA Lärm, Routenoptimierung, MORPHEUS, Leaflet, Google Maps, 3D">
     <meta name="author" content="MORPHEUS Project">
 
     <title>MORPHEUS Dashboard - Interaktives Karten-Dashboard</title>
@@ -19,8 +19,69 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
+    <!-- Custom Scripts -->
+    <script src="assets/api-client.js"></script>
+    <script src="assets/google-maps-3d.js"></script>
+
     <!-- Custom Styles -->
     <link rel="stylesheet" href="assets/styles.css">
+    
+    <style>
+        /* Map Container Styles */
+        #map, #google-map-3d {
+            height: 600px;
+            width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .map-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .map-toggle-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .map-toggle-btn:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .status-online {
+            background-color: #10b981;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚁</text></svg>">
@@ -30,320 +91,125 @@
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
     <!-- Header -->
-    <header role="banner">
+    <header role="banner" class="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
         <nav class="container mx-auto px-4 py-3" role="navigation" aria-label="Main navigation">
             <div class="flex flex-wrap items-center justify-between">
                 <div class="flex items-center space-x-3">
                     <span class="text-3xl" role="img" aria-label="Drone icon">🚁</span>
                     <div>
-                        <h1>MORPHEUS Dashboard</h1>
-                        <p id="headerSubtitle">Interaktives Karten-Dashboard</p>
+                        <h1 class="text-2xl font-bold">MORPHEUS Dashboard</h1>
+                        <p class="text-sm text-blue-200">Google Maps 3D + Leaflet Integration</p>
                     </div>
                 </div>
 
                 <div class="flex items-center space-x-4 mt-2 sm:mt-0">
-                    <!-- Language Toggle -->
-                    <div class="flex items-center space-x-2">
-                        <select id="languageSelect"
-                                class="bg-gray-100 border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                aria-label="Language selection">
-                            <option value="de">DE</option>
-                            <option value="en">EN</option>
-                        </select>
+                    <!-- WebSocket Status -->
+                    <div class="flex items-center space-x-2 bg-white/10 px-3 py-1 rounded">
+                        <span class="status-indicator status-online" id="wsStatus"></span>
+                        <span class="text-sm" id="wsStatusText">Live</span>
                     </div>
-
-                    <!-- Compliance Status -->
-                    <div class="flex items-center space-x-2">
-                        <span class="compliance-indicator compliant" role="status"></span>
-                        <span id="complianceStatus">TA-Lärm Konform</span>
-                    </div>
-
+                    
                     <!-- Last Update -->
-                    <span class="last-update" id="lastUpdate">--:--:--</span>
+                    <span class="text-sm text-blue-200" id="lastUpdate">--:--:--</span>
                 </div>
             </div>
         </nav>
     </header>
 
-    <!-- Tab Navigation -->
-    <div class="container mx-auto px-4 pt-4">
-        <div class="tab-navigation" role="tablist">
-            <button class="tab-button active" data-tab="map" role="tab" aria-selected="true" aria-controls="tab-map">
-                <span id="tabMapLabel">🗺️ Interaktive Karte</span>
-            </button>
-            <button class="tab-button" data-tab="fleet" role="tab" aria-selected="false" aria-controls="tab-fleet">
-                <span id="tabFleetLabel">🚁 Flottenstatus</span>
-            </button>
-            <button class="tab-button" data-tab="noise" role="tab" aria-selected="false" aria-controls="tab-noise">
-                <span id="tabNoiseLabel">🔊 Lärmschutz</span>
-            </button>
-        </div>
-    </div>
-
     <!-- Main Content -->
-    <main id="main-content" class="container mx-auto px-4 py-4" role="main">
+    <main id="main-content" class="container mx-auto px-4 py-6" role="main">
 
-        <!-- ============================================= -->
-        <!-- TAB 1: INTERACTIVE MAP DASHBOARD -->
-        <!-- ============================================= -->
-        <div id="tab-map" class="tab-content active" role="tabpanel" aria-labelledby="tabMapLabel">
-
-            <!-- Quick Stats Row -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
-                <div class="metric-card dashboard-card bg-white">
-                    <div class="metric-icon">🛫</div>
-                    <div class="metric-value text-blue-600" id="activeFlights">3</div>
-                    <div class="metric-label" id="activeFlightsLabel">Aktive Flüge</div>
+        <!-- Control Panel -->
+        <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Active Flights -->
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-blue-600" id="activeFlights">3</div>
+                    <div class="text-sm text-gray-600">Aktive Flüge</div>
                 </div>
-                <div class="metric-card dashboard-card bg-white">
-                    <div class="metric-icon">📍</div>
-                    <div class="metric-value text-green-600">10</div>
-                    <div class="metric-label" id="measurementPointsLabel">Messpunkte</div>
+                
+                <!-- Routes -->
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-green-600" id="routeCount">3</div>
+                    <div class="text-sm text-gray-600">Routen</div>
                 </div>
-                <div class="metric-card dashboard-card bg-white">
-                    <div class="metric-icon">✅</div>
-                    <div class="metric-value text-green-600" id="compliantPoints">8</div>
-                    <div class="metric-label" id="compliantLabel">Konform</div>
-                </div>
-                <div class="metric-card dashboard-card bg-white">
-                    <div class="metric-icon">⚠️</div>
-                    <div class="metric-value text-amber-600" id="warningPoints">2</div>
-                    <div class="metric-label" id="warningsLabel">Warnungen</div>
+                
+                <!-- TA Lärm Status -->
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-green-600">✓</div>
+                    <div class="text-sm text-gray-600" id="complianceStatus">TA-Lärm Konform</div>
                 </div>
             </div>
-
-            <!-- Map Section -->
-            <section class="dashboard-section" aria-labelledby="map-heading">
-                <div class="section-header">
-                    <h2 id="map-heading" class="section-title">
-                        <span id="mapTitle">Routen & Lärmzonen</span>
-                    </h2>
-                </div>
-
-                <!-- Map Controls -->
-                <div class="map-controls-panel">
-                    <div class="map-controls-grid">
-                        <!-- Layer Controls -->
-                        <div class="control-group">
-                            <span class="control-label" id="layersLabel">Layer:</span>
-                        </div>
-
-                        <label class="control-group cursor-pointer">
-                            <span class="route-dot" style="background: #EF4444"></span>
-                            <span class="text-sm">Route A</span>
-                            <label class="toggle-switch">
-                                <input type="checkbox" checked data-leaflet-route="route_a">
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </label>
-
-                        <label class="control-group cursor-pointer">
-                            <span class="route-dot" style="background: #22C55E"></span>
-                            <span class="text-sm">Route B</span>
-                            <label class="toggle-switch">
-                                <input type="checkbox" checked data-leaflet-route="route_b">
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </label>
-
-                        <label class="control-group cursor-pointer">
-                            <span class="route-dot" style="background: #F97316"></span>
-                            <span class="text-sm">Route C</span>
-                            <label class="toggle-switch">
-                                <input type="checkbox" checked data-leaflet-route="route_c">
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </label>
-
-                        <div class="border-l border-gray-300 h-6 mx-2"></div>
-
-                        <label class="control-group cursor-pointer">
-                            <span class="text-sm" id="heatmapLabel">Heatmap</span>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="leafletHeatmapToggle">
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </label>
-
-                        <label class="control-group cursor-pointer">
-                            <span class="text-sm" id="zonesLabel">Lärmzonen</span>
-                            <label class="toggle-switch">
-                                <input type="checkbox" checked id="noiseZonesToggle">
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Leaflet Map Container -->
-                <div id="leaflet-map" role="application" aria-label="Interactive map showing drone routes, noise zones, and measurement points"></div>
-            </section>
-
-            <!-- Route Comparison Table -->
-            <section class="dashboard-section" aria-labelledby="route-comparison-heading">
-                <h3 id="route-comparison-heading" class="section-title mb-4">
-                    <span id="routeComparisonTitle">Routenvergleich</span>
-                </h3>
-                <div class="overflow-x-auto">
-                    <table class="route-table" role="table">
-                        <thead>
-                            <tr>
-                                <th scope="col"><span id="colRoute">Route</span></th>
-                                <th scope="col"><span id="colDistance">Distanz</span></th>
-                                <th scope="col"><span id="colDuration">Flugzeit</span></th>
-                                <th scope="col"><span id="colNoise">Lärmbelastung</span></th>
-                                <th scope="col"><span id="colEnergy">Energie</span></th>
-                                <th scope="col"><span id="colStatus">Status</span></th>
-                            </tr>
-                        </thead>
-                        <tbody id="routeTableBody">
-                            <tr>
-                                <td><span class="font-semibold" style="color: #EF4444">● Route A - Optimiert</span></td>
-                                <td>12.3 km</td>
-                                <td>8 min</td>
-                                <td>48 dB(A)</td>
-                                <td>72%</td>
-                                <td><span class="status-badge success">✓ Konform</span></td>
-                            </tr>
-                            <tr>
-                                <td><span class="font-semibold" style="color: #22C55E">● Route B - Standard</span></td>
-                                <td>10.8 km</td>
-                                <td>7 min</td>
-                                <td>52 dB(A)</td>
-                                <td>65%</td>
-                                <td><span class="status-badge success">✓ Konform</span></td>
-                            </tr>
-                            <tr>
-                                <td><span class="font-semibold" style="color: #F97316">● Route C - Schnell</span></td>
-                                <td>9.5 km</td>
-                                <td>5 min</td>
-                                <td>58 dB(A)</td>
-                                <td>58%</td>
-                                <td><span class="status-badge warning">⚠ Grenzwertnah</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
         </div>
 
-        <!-- ============================================= -->
-        <!-- TAB 2: FLEET STATUS DASHBOARD -->
-        <!-- ============================================= -->
-        <div id="tab-fleet" class="tab-content" role="tabpanel" aria-labelledby="tabFleetLabel">
-
-            <!-- Fleet Tracker -->
-            <section class="dashboard-section" aria-labelledby="fleet-heading">
-                <div id="fleet-tracker"></div>
-            </section>
-
-            <!-- Two Column Layout -->
-            <div class="dashboard-grid dashboard-grid-2">
-                <!-- Flight Schedule -->
-                <section class="dashboard-section" aria-labelledby="schedule-heading">
-                    <div id="flight-schedule"></div>
-                </section>
-
-                <!-- Daily Flights Chart -->
-                <section class="dashboard-section" aria-labelledby="flights-chart-heading">
-                    <h3 id="flights-chart-heading" class="section-title mb-4">
-                        <span id="flightsChartTitle">Tägliche Flüge</span>
-                    </h3>
-                    <div class="chart-container">
-                        <canvas id="flightsChart" role="img" aria-label="Daily flights chart"></canvas>
-                    </div>
-                </section>
-            </div>
-
-            <!-- Performance Metrics -->
-            <section class="dashboard-section" aria-labelledby="performance-heading">
-                <div id="performance-metrics"></div>
-            </section>
+        <!-- Map Container with Toggle -->
+        <div class="map-container">
+            <button class="map-toggle-btn" id="mapToggleBtn" onclick="toggleMapView()">
+                <span id="mapToggleText">🗺️ 3D-Ansicht umschalten</span>
+            </button>
+            
+            <!-- Leaflet Map (Default) -->
+            <div id="map"></div>
+            
+            <!-- Google Maps 3D (Hidden by default) -->
+            <div id="google-map-3d" class="hidden"></div>
         </div>
 
-        <!-- ============================================= -->
-        <!-- TAB 3: NOISE PROTECTION DASHBOARD -->
-        <!-- ============================================= -->
-        <div id="tab-noise" class="tab-content" role="tabpanel" aria-labelledby="tabNoiseLabel">
-
-            <!-- Noise Statistics -->
-            <section class="dashboard-section" aria-labelledby="noise-stats-heading">
-                <h3 id="noise-stats-heading" class="section-title mb-4">
-                    <span id="noiseStatsTitle">Übersicht</span>
-                </h3>
-                <div id="noise-stats"></div>
-            </section>
-
-            <!-- Immissionsort Matrix -->
-            <section class="dashboard-section" aria-labelledby="matrix-heading">
-                <div id="immissionsort-matrix"></div>
-            </section>
-
-            <!-- Two Column Layout -->
-            <div class="dashboard-grid dashboard-grid-2">
-                <!-- 24h Noise Chart -->
-                <section class="dashboard-section" aria-labelledby="noise-chart-heading">
-                    <h3 id="noise-chart-heading" class="section-title mb-4">
-                        <span id="noise24hTitle">24-Stunden Lärmverlauf</span>
-                    </h3>
-                    <div class="chart-container">
-                        <canvas id="noise24hChart" role="img" aria-label="24-hour noise chart"></canvas>
-                    </div>
-                </section>
-
-                <!-- TA-Lärm Reference -->
-                <section class="dashboard-section" aria-labelledby="reference-heading">
-                    <div id="ta-laerm-reference"></div>
-                </section>
+        <!-- Route Information -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-bold mb-4">📍 Routen-Übersicht</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 text-left">Route</th>
+                            <th class="px-4 py-2 text-left">Farbe</th>
+                            <th class="px-4 py-2 text-right">Distanz</th>
+                            <th class="px-4 py-2 text-left">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="routeTable">
+                        <tr>
+                            <td class="px-4 py-2">Route A - Direktroute</td>
+                            <td class="px-4 py-2"><span class="inline-block w-4 h-4 rounded" style="background-color: #0000FF;"></span> Blau</td>
+                            <td class="px-4 py-2 text-right">0,8 km</td>
+                            <td class="px-4 py-2"><span class="text-green-600">✓ Aktiv</span></td>
+                        </tr>
+                        <tr class="bg-gray-50">
+                            <td class="px-4 py-2">Route B - Optimiert</td>
+                            <td class="px-4 py-2"><span class="inline-block w-4 h-4 rounded" style="background-color: #00FF00;"></span> Grün</td>
+                            <td class="px-4 py-2 text-right">0,9 km</td>
+                            <td class="px-4 py-2"><span class="text-gray-400">○ Inaktiv</span></td>
+                        </tr>
+                        <tr>
+                            <td class="px-4 py-2">Route C - Lärmvermeidend</td>
+                            <td class="px-4 py-2"><span class="inline-block w-4 h-4 rounded" style="background-color: #FF8800;"></span> Orange</td>
+                            <td class="px-4 py-2 text-right">1,0 km</td>
+                            <td class="px-4 py-2"><span class="text-gray-400">○ Inaktiv</span></td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
+        </div>
 
-            <!-- Compliance Status -->
-            <section class="dashboard-section" aria-labelledby="compliance-section-heading">
-                <h3 id="compliance-section-heading" class="section-title mb-4">
-                    <span id="complianceSectionTitle">Regulatory Compliance</span>
-                </h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="bg-white rounded-lg p-4 border-l-4 border-green-500">
-                        <div class="flex items-center justify-between mb-2">
-                            <h4 class="font-semibold text-gray-800">TA Lärm 1998</h4>
-                            <span class="compliance-indicator compliant"></span>
-                        </div>
-                        <p class="text-sm text-gray-600">Technische Anleitung zum Schutz gegen Lärm</p>
-                        <span class="status-badge success mt-2">✓ Konform</span>
-                    </div>
-                    <div class="bg-white rounded-lg p-4 border-l-4 border-green-500">
-                        <div class="flex items-center justify-between mb-2">
-                            <h4 class="font-semibold text-gray-800">EU 2019/947</h4>
-                            <span class="compliance-indicator compliant"></span>
-                        </div>
-                        <p class="text-sm text-gray-600">EU Drohnenverordnung</p>
-                        <span class="status-badge success mt-2">✓ Konform</span>
-                    </div>
-                    <div class="bg-white rounded-lg p-4 border-l-4 border-green-500">
-                        <div class="flex items-center justify-between mb-2">
-                            <h4 class="font-semibold text-gray-800">SAIL III</h4>
-                            <span class="compliance-indicator compliant"></span>
-                        </div>
-                        <p class="text-sm text-gray-600">Specific Assurance & Integrity Level</p>
-                        <span class="status-badge success mt-2">✓ Validiert</span>
-                    </div>
-                </div>
-            </section>
+        <!-- Debug Panel (Optional) -->
+        <div class="bg-gray-50 rounded-lg p-4 text-xs">
+            <h3 class="font-bold mb-2">Debug Info</h3>
+            <div id="debugInfo" class="font-mono text-gray-600">
+                <div>Map Mode: <span id="currentMapMode">Leaflet</span></div>
+                <div>WebSocket: <span id="wsConnectionStatus">Connecting...</span></div>
+                <div>Routes Loaded: <span id="routesLoaded">0</span></div>
+            </div>
         </div>
 
     </main>
 
     <!-- Footer -->
-    <footer role="contentinfo">
-        <div class="container mx-auto px-4">
-            <div class="flex flex-wrap justify-between items-center">
-                <p class="text-sm" id="footerText">© 2024 MORPHEUS Dashboard - Drohnen-Routenanalyse</p>
-                <p class="text-xs text-gray-400" id="footerNote">
-                    Entwickelt für automatisierte Drohnen-Routenanalyse unter Berücksichtigung europäischer Regularien
-                </p>
-            </div>
-        </div>
+    <footer class="bg-gray-800 text-white text-center py-4 mt-8">
+        <p>&copy; 2024 MORPHEUS Project | <a href="https://github.com/Darkness308/Live_Dashboard_Drohnen_Standort-Routenanalyse" class="text-blue-300 hover:text-blue-100">GitHub</a></p>
     </footer>
+
+copilot/featuregoogle-maps-3d-integration
 
     <!-- Load data and modules -->
     <script src="assets/api-client.js"></script>
@@ -370,156 +236,199 @@
     </script>
 
     <!-- Main Application Script -->
+main
     <script>
-        // Current language
-        let currentLang = 'de';
+        // =============================================================================
+        // Global State
+        // =============================================================================
+        let currentMapMode = 'leaflet'; // 'leaflet' or 'google'
+        let leafletMap = null;
+        let googleMapInitialized = false;
+        let wsConnection = null;
 
-        // Translations
-        const translations = {
-            de: {
-                headerSubtitle: 'Interaktives Karten-Dashboard',
-                complianceStatus: 'TA-Lärm Konform',
-                tabMapLabel: '🗺️ Interaktive Karte',
-                tabFleetLabel: '🚁 Flottenstatus',
-                tabNoiseLabel: '🔊 Lärmschutz',
-                activeFlightsLabel: 'Aktive Flüge',
-                measurementPointsLabel: 'Messpunkte',
-                compliantLabel: 'Konform',
-                warningsLabel: 'Warnungen',
-                mapTitle: 'Routen & Lärmzonen',
-                layersLabel: 'Layer:',
-                heatmapLabel: 'Heatmap',
-                zonesLabel: 'Lärmzonen',
-                routeComparisonTitle: 'Routenvergleich',
-                colRoute: 'Route',
-                colDistance: 'Distanz',
-                colDuration: 'Flugzeit',
-                colNoise: 'Lärmbelastung',
-                colEnergy: 'Energie',
-                colStatus: 'Status',
-                flightsChartTitle: 'Tägliche Flüge',
-                noiseStatsTitle: 'Übersicht',
-                noise24hTitle: '24-Stunden Lärmverlauf',
-                complianceSectionTitle: 'Regulatory Compliance',
-                footerText: '© 2024 MORPHEUS Dashboard - Drohnen-Routenanalyse',
-                footerNote: 'Entwickelt für automatisierte Drohnen-Routenanalyse unter Berücksichtigung europäischer Regularien'
-            },
-            en: {
-                headerSubtitle: 'Interactive Map Dashboard',
-                complianceStatus: 'TA Noise Compliant',
-                tabMapLabel: '🗺️ Interactive Map',
-                tabFleetLabel: '🚁 Fleet Status',
-                tabNoiseLabel: '🔊 Noise Protection',
-                activeFlightsLabel: 'Active Flights',
-                measurementPointsLabel: 'Measurement Points',
-                compliantLabel: 'Compliant',
-                warningsLabel: 'Warnings',
-                mapTitle: 'Routes & Noise Zones',
-                layersLabel: 'Layers:',
-                heatmapLabel: 'Heatmap',
-                zonesLabel: 'Noise Zones',
-                routeComparisonTitle: 'Route Comparison',
-                colRoute: 'Route',
-                colDistance: 'Distance',
-                colDuration: 'Flight Time',
-                colNoise: 'Noise Exposure',
-                colEnergy: 'Energy',
-                colStatus: 'Status',
-                flightsChartTitle: 'Daily Flights',
-                noiseStatsTitle: 'Overview',
-                noise24hTitle: '24-Hour Noise Trend',
-                complianceSectionTitle: 'Regulatory Compliance',
-                footerText: '© 2024 MORPHEUS Dashboard - Drone Route Analysis',
-                footerNote: 'Developed for automated drone route analysis considering European regulations'
-            }
-        };
-
-        // Update page language
-        function updateLanguage(lang) {
-            currentLang = lang;
-            document.documentElement.lang = lang;
-
-            // Update all translatable elements
-            Object.keys(translations[lang]).forEach(key => {
-                const element = document.getElementById(key);
-                if (element) {
-                    element.textContent = translations[lang][key];
-                }
-            });
-
-            // Update module languages
-            if (typeof updateMapLanguage === 'function') {
-                updateMapLanguage(lang);
-            }
-            if (typeof updateFleetLanguage === 'function') {
-                updateFleetLanguage(lang);
-            }
-            if (typeof updateNoiseLanguage === 'function') {
-                updateNoiseLanguage(lang);
-            }
+        // =============================================================================
+        // Leaflet Map Initialization (Default)
+        // =============================================================================
+        function initLeafletMap() {
+            console.log('Initializing Leaflet map...');
+            
+            const iserlohnCenter = [51.373, 7.701];
+            
+            leafletMap = L.map('map').setView(iserlohnCenter, 14);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19
+            }).addTo(leafletMap);
+            
+            // Add a marker for Iserlohn center
+            L.marker(iserlohnCenter)
+                .addTo(leafletMap)
+                .bindPopup('<b>Iserlohn Zentrum</b><br>Drohnen-Operationsgebiet')
+                .openPopup();
+            
+            console.log('Leaflet map initialized');
         }
 
-        // Tab navigation
-        function initTabs() {
-            const tabButtons = document.querySelectorAll('.tab-button');
-            const tabContents = document.querySelectorAll('.tab-content');
-
-            tabButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    const targetTab = button.dataset.tab;
-
-                    // Update buttons
-                    tabButtons.forEach(btn => {
-                        btn.classList.remove('active');
-                        btn.setAttribute('aria-selected', 'false');
-                    });
-                    button.classList.add('active');
-                    button.setAttribute('aria-selected', 'true');
-
-                    // Update content
-                    tabContents.forEach(content => {
-                        content.classList.remove('active');
-                    });
-                    document.getElementById(`tab-${targetTab}`).classList.add('active');
+        // =============================================================================
+        // Google Maps 3D Initialization
+        // =============================================================================
+        async function initGoogleMaps() {
+            if (googleMapInitialized) {
+                console.log('Google Maps already initialized');
+                return;
+            }
+            
+            console.log('Initializing Google Maps 3D...');
+            
+            try {
+                await MORPHEUS_GMAPS.init('google-map-3d', {
+                    center: { lat: 51.373, lng: 7.701 },
+                    zoom: 17
                 });
-            });
+                
+                googleMapInitialized = true;
+                console.log('Google Maps 3D initialized');
+                
+                // Load routes from backend
+                loadRoutes();
+                
+            } catch (error) {
+                console.error('Failed to initialize Google Maps:', error);
+                alert('Google Maps konnte nicht geladen werden. Bitte API-Key konfigurieren.');
+            }
         }
 
-        // Update timestamp
-        function updateTimestamp() {
+        // =============================================================================
+        // Map Toggle Function
+        // =============================================================================
+        function toggleMapView() {
+            const leafletContainer = document.getElementById('map');
+            const googleContainer = document.getElementById('google-map-3d');
+            const toggleText = document.getElementById('mapToggleText');
+            const currentModeDisplay = document.getElementById('currentMapMode');
+            
+            if (currentMapMode === 'leaflet') {
+                // Switch to Google Maps 3D
+                leafletContainer.classList.add('hidden');
+                googleContainer.classList.remove('hidden');
+                currentMapMode = 'google';
+                toggleText.textContent = '🗺️ 2D-Ansicht umschalten';
+                currentModeDisplay.textContent = 'Google Maps 3D';
+                
+                // Initialize Google Maps if not done yet
+                if (!googleMapInitialized) {
+                    initGoogleMaps();
+                }
+                
+            } else {
+                // Switch to Leaflet
+                googleContainer.classList.add('hidden');
+                leafletContainer.classList.remove('hidden');
+                currentMapMode = 'leaflet';
+                toggleText.textContent = '🗺️ 3D-Ansicht umschalten';
+                currentModeDisplay.textContent = 'Leaflet';
+            }
+            
+            console.log('Map view toggled to:', currentMapMode);
+        }
+
+        // =============================================================================
+        // Load Routes from Backend
+        // =============================================================================
+        async function loadRoutes() {
+            try {
+                console.log('Loading routes from backend...');
+                const data = await MORPHEUS_API.fetchRoutes();
+                
+                if (data && data.routes) {
+                    console.log('Routes loaded:', data.routes.length);
+                    document.getElementById('routesLoaded').textContent = data.routes.length;
+                    
+                    if (googleMapInitialized) {
+                        MORPHEUS_GMAPS.renderRoutes(data.routes);
+                    }
+                    
+                    // Update route count
+                    document.getElementById('routeCount').textContent = data.routes.length;
+                }
+                
+            } catch (error) {
+                console.warn('Could not load routes from backend:', error);
+                document.getElementById('routesLoaded').textContent = 'Error';
+            }
+        }
+
+        // =============================================================================
+        // WebSocket Connection
+        // =============================================================================
+        function connectWebSocket() {
+            console.log('Connecting to WebSocket...');
+            
+            try {
+                wsConnection = MORPHEUS_API.connectWs(
+                    // onMessage
+                    (data) => {
+                        console.log('WebSocket message:', data);
+                        if (googleMapInitialized && currentMapMode === 'google') {
+                            MORPHEUS_GMAPS.handleLiveUpdate(data);
+                        }
+                    },
+                    // onOpen
+                    () => {
+                        console.log('WebSocket connected');
+                        document.getElementById('wsStatus').classList.add('status-online');
+                        document.getElementById('wsStatusText').textContent = 'Live';
+                        document.getElementById('wsConnectionStatus').textContent = 'Connected';
+                    },
+                    // onClose
+                    () => {
+                        console.log('WebSocket disconnected');
+                        document.getElementById('wsStatus').classList.remove('status-online');
+                        document.getElementById('wsStatusText').textContent = 'Offline';
+                        document.getElementById('wsConnectionStatus').textContent = 'Disconnected';
+                    },
+                    // onError
+                    (error) => {
+                        console.error('WebSocket error:', error);
+                        document.getElementById('wsConnectionStatus').textContent = 'Error';
+                    }
+                );
+                
+            } catch (error) {
+                console.warn('WebSocket not available:', error);
+                document.getElementById('wsConnectionStatus').textContent = 'Not Available';
+            }
+        }
+
+        // =============================================================================
+        // Update Clock
+        // =============================================================================
+        function updateClock() {
             const now = new Date();
-            const timeStr = now.toLocaleTimeString('de-DE', {
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            });
-            document.getElementById('lastUpdate').textContent = timeStr;
+            const timeString = now.toLocaleTimeString('de-DE');
+            document.getElementById('lastUpdate').textContent = timeString;
         }
 
-        // Initialize application
-        document.addEventListener('DOMContentLoaded', () => {
-            // Initialize tabs
-            initTabs();
-
-            // Initialize Leaflet map
+        // =============================================================================
+        // Initialize Dashboard
+        // =============================================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Dashboard initializing...');
+            
+            // Initialize Leaflet (default map)
             initLeafletMap();
-
-            // Initialize Fleet Dashboard
-            initFleetDashboard();
-
-            // Initialize Noise Dashboard
-            initNoiseDashboard();
-
-            // Language selector
-            document.getElementById('languageSelect').addEventListener('change', (e) => {
-                updateLanguage(e.target.value);
-            });
-
-            // Update timestamp
-            updateTimestamp();
-            setInterval(updateTimestamp, 1000);
-
-            console.info('MORPHEUS Dashboard initialized');
+            
+            // Start clock
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            // Connect WebSocket
+            setTimeout(() => {
+                connectWebSocket();
+            }, 1000);
+            
+            console.log('Dashboard initialized');
         });
     </script>
 </body>
