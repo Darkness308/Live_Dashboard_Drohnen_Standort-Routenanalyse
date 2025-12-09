@@ -25,19 +25,19 @@
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚁</text></svg>">
 </head>
-<body class="bg-gray-100">
+<body>
     <!-- Skip to main content for accessibility -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
     <!-- Header -->
-    <header class="bg-white shadow-md sticky top-0 z-50" role="banner">
+    <header role="banner">
         <nav class="container mx-auto px-4 py-3" role="navigation" aria-label="Main navigation">
             <div class="flex flex-wrap items-center justify-between">
                 <div class="flex items-center space-x-3">
                     <span class="text-3xl" role="img" aria-label="Drone icon">🚁</span>
                     <div>
-                        <h1 class="text-xl font-bold text-gray-800">MORPHEUS Dashboard</h1>
-                        <p class="text-xs text-gray-600" id="headerSubtitle">Interaktives Karten-Dashboard</p>
+                        <h1>MORPHEUS Dashboard</h1>
+                        <p id="headerSubtitle">Interaktives Karten-Dashboard</p>
                     </div>
                 </div>
 
@@ -55,7 +55,7 @@
                     <!-- Compliance Status -->
                     <div class="flex items-center space-x-2">
                         <span class="compliance-indicator compliant" role="status"></span>
-                        <span class="text-sm font-medium text-green-600" id="complianceStatus">TA-Lärm Konform</span>
+                        <span id="complianceStatus">TA-Lärm Konform</span>
                     </div>
 
                     <!-- Last Update -->
@@ -181,7 +181,7 @@
 
             <!-- Route Comparison Table -->
             <section class="dashboard-section" aria-labelledby="route-comparison-heading">
-                <h3 id="route-comparison-heading" class="text-lg font-bold text-gray-800 mb-4">
+                <h3 id="route-comparison-heading" class="section-title mb-4">
                     <span id="routeComparisonTitle">Routenvergleich</span>
                 </h3>
                 <div class="overflow-x-auto">
@@ -246,7 +246,7 @@
 
                 <!-- Daily Flights Chart -->
                 <section class="dashboard-section" aria-labelledby="flights-chart-heading">
-                    <h3 id="flights-chart-heading" class="text-lg font-bold text-gray-800 mb-4">
+                    <h3 id="flights-chart-heading" class="section-title mb-4">
                         <span id="flightsChartTitle">Tägliche Flüge</span>
                     </h3>
                     <div class="chart-container">
@@ -268,7 +268,7 @@
 
             <!-- Noise Statistics -->
             <section class="dashboard-section" aria-labelledby="noise-stats-heading">
-                <h3 id="noise-stats-heading" class="text-lg font-bold text-gray-800 mb-4">
+                <h3 id="noise-stats-heading" class="section-title mb-4">
                     <span id="noiseStatsTitle">Übersicht</span>
                 </h3>
                 <div id="noise-stats"></div>
@@ -283,7 +283,7 @@
             <div class="dashboard-grid dashboard-grid-2">
                 <!-- 24h Noise Chart -->
                 <section class="dashboard-section" aria-labelledby="noise-chart-heading">
-                    <h3 id="noise-chart-heading" class="text-lg font-bold text-gray-800 mb-4">
+                    <h3 id="noise-chart-heading" class="section-title mb-4">
                         <span id="noise24hTitle">24-Stunden Lärmverlauf</span>
                     </h3>
                     <div class="chart-container">
@@ -299,7 +299,7 @@
 
             <!-- Compliance Status -->
             <section class="dashboard-section" aria-labelledby="compliance-section-heading">
-                <h3 id="compliance-section-heading" class="text-lg font-bold text-gray-800 mb-4">
+                <h3 id="compliance-section-heading" class="section-title mb-4">
                     <span id="complianceSectionTitle">Regulatory Compliance</span>
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -334,7 +334,7 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-gray-800 text-white py-4 mt-8" role="contentinfo">
+    <footer role="contentinfo">
         <div class="container mx-auto px-4">
             <div class="flex flex-wrap justify-between items-center">
                 <p class="text-sm" id="footerText">© 2024 MORPHEUS Dashboard - Drohnen-Routenanalyse</p>
@@ -351,6 +351,22 @@
     <script src="assets/fleet-dashboard.js"></script>
     <script src="assets/noise-dashboard.js"></script>
     <script src="assets/charts.js"></script>
+
+    <!-- Dark Theme Chart.js Configuration -->
+    <script>
+        // Global Chart.js Dark Theme Configuration
+        Chart.defaults.color = '#a0a0b0';
+        Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.08)';
+        Chart.defaults.backgroundColor = 'rgba(0, 212, 255, 0.1)';
+
+        // Plugin for dark theme backgrounds
+        Chart.defaults.plugins.legend.labels.color = '#a0a0b0';
+        Chart.defaults.plugins.title.color = '#f0f0f5';
+
+        // Scale defaults for dark theme
+        Chart.defaults.scale.grid.color = 'rgba(255, 255, 255, 0.06)';
+        Chart.defaults.scale.ticks.color = '#707080';
+    </script>
 
     <!-- Main Application Script -->
     <script>
