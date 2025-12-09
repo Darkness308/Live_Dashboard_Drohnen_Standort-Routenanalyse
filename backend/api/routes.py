@@ -11,12 +11,15 @@ API-Endpoints für:
 - /audit/trail - Audit-Log Abfrage
 """
 
+import json
 import logging
+import math
+import os
 from datetime import datetime
 from enum import Enum
 from typing import Dict, List, Optional, Tuple
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field, validator
 
 # Lokale Imports - relative Imports für Backend-Modul
@@ -795,8 +798,6 @@ async def calculate_simple_noise(payload: dict):
     Returns:
         Geschätzter Lärmpegel in dB(A)
     """
-    import math
-    
     # Simple noise calculation
     altitude = payload.get("altitude", 50)  # Default 50m
     distance = max(altitude, 10)  # Mindestens 10m
@@ -824,9 +825,9 @@ async def get_dashboard_config():
     Liefert Frontend-Konfiguration.
     
     **Wichtig:** API-Key aus Umgebungsvariable laden!
+    **Sicherheit:** Google Maps API-Keys sind für Frontend-Nutzung konzipiert
+    und sollten mit Domain-Restrictions im Google Cloud Console geschützt werden.
     """
-    import os
-    
     api_key = os.getenv("GOOGLE_MAPS_API_KEY", "")
     map_id = os.getenv("GOOGLE_MAPS_MAP_ID", "")
     
@@ -841,8 +842,6 @@ async def get_dashboard_config():
 # =============================================================================
 # WebSocket Endpoint für Live-Updates
 # =============================================================================
-
-from fastapi import WebSocket, WebSocketDisconnect
 
 
 class ConnectionManager:
@@ -860,12 +859,12 @@ class ConnectionManager:
     
     async def broadcast(self, message: dict):
         """Sendet Nachricht an alle verbundenen Clients."""
-        import json
         for connection in self.active_connections:
             try:
                 await connection.send_text(json.dumps(message))
-            except:
-                pass  # Ignoriere fehlerhafte Verbindungen
+            except (WebSocketDisconnect, RuntimeError, Exception) as e:
+                logger.warning(f"Failed to send message to client: {e}")
+                # Ignoriere fehlerhafte Verbindungen
 
 
 manager = ConnectionManager()
