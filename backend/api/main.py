@@ -24,6 +24,16 @@ from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 
 from .routes import router as api_router
+from .websocket import router as ws_router
+
+# Import geodata router with fallback
+try:
+    from ..integrations.geodata_service import create_geodata_router
+    geodata_router = create_geodata_router()
+    GEODATA_AVAILABLE = True
+except ImportError:
+    geodata_router = None
+    GEODATA_AVAILABLE = False
 
 # Logger konfigurieren
 logging.basicConfig(
@@ -103,12 +113,20 @@ allowed_origins.extend(
         "http://localhost:3000",
         "http://127.0.0.1:8000",
         "http://127.0.0.1:3000",
+claude/review-drone-acoustic-repos-01NdD96qep12urAjs3HjNU1n
+        # GitHub Pages
+        "https://darkness308.github.io",
+        # Alle Origins erlauben fuer Entwicklung (in Produktion einschraenken)
+        "*",
+    ],
+
     ]
 )
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
+main
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
@@ -140,6 +158,16 @@ async def log_requests(request: Request, call_next):
 app.include_router(api_router, prefix="/api/v1")
 # Dashboard-Endpoints ohne v1-Prefix (für Google Maps Integration)
 app.include_router(api_router, prefix="/api")
+
+# WebSocket-Router einbinden
+app.include_router(ws_router)
+
+# Geodata-Router einbinden (falls verfuegbar)
+if GEODATA_AVAILABLE and geodata_router:
+    app.include_router(geodata_router, prefix="/api/v1")
+    logger.info("Geodata Router aktiviert")
+else:
+    logger.warning("Geodata Router nicht verfuegbar - Dependencies pruefen")
 
 
 # =============================================================================

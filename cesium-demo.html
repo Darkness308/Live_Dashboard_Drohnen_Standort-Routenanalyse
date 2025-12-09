@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="MORPHEUS Dashboard - CesiumJS 3D Globe Demo mit Flugrouten-Visualisierung">
+    <title>MORPHEUS 3D Globe - CesiumJS Demo</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="assets/styles.css">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>">
+
+    <style>
+        #cesium-container {
+            width: 100%;
+            height: calc(100vh - 200px);
+            min-height: 500px;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .control-panel {
+            background: rgba(10, 10, 15, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+
+        .route-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .route-card:hover {
+            background: rgba(0, 212, 255, 0.1);
+            border-color: rgba(0, 212, 255, 0.3);
+        }
+
+        .route-card.active {
+            border-color: #00d4ff;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+        }
+
+        .btn-cesium {
+            background: linear-gradient(135deg, #00d4ff 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-cesium:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4);
+        }
+
+        .btn-cesium:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .noise-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #10b981, #f59e0b, #ef4444);
+            outline: none;
+        }
+
+        .noise-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(10, 10, 15, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            border-radius: 12px;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(0, 212, 255, 0.2);
+            border-top-color: #00d4ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header role="banner">
+        <nav class="container mx-auto px-4 py-3" role="navigation">
+            <div class="flex flex-wrap items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <span class="text-3xl">🌍</span>
+                    <div>
+                        <h1>MORPHEUS 3D Globe</h1>
+                        <p class="text-sm opacity-70">CesiumJS Flugrouten-Visualisierung</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <a href="dashboard.html" class="text-sm hover:text-cyan-400 transition">
+                        ← Zurueck zum Dashboard
+                    </a>
+                    <span class="compliance-indicator compliant"></span>
+                    <span class="text-sm">3D Ready</span>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-4">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+
+            <!-- Control Panel (Left) -->
+            <div class="lg:col-span-1 space-y-4">
+
+                <!-- Route Selection -->
+                <div class="control-panel">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span>🛫</span> Flugrouten
+                    </h3>
+
+                    <div id="route-list">
+                        <div class="route-card active" data-route="route-1">
+                            <div class="flex justify-between items-center">
+                                <span class="font-medium text-cyan-400">Route A - Optimiert</span>
+                                <span class="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">52 dB</span>
+                            </div>
+                            <div class="text-xs opacity-60 mt-1">8.5 km | 18 min | TA-Laerm konform</div>
+                        </div>
+
+                        <div class="route-card" data-route="route-2">
+                            <div class="flex justify-between items-center">
+                                <span class="font-medium text-emerald-400">Route B - Standard</span>
+                                <span class="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded">58 dB</span>
+                            </div>
+                            <div class="text-xs opacity-60 mt-1">9.2 km | 20 min | TA-Laerm konform</div>
+                        </div>
+
+                        <div class="route-card" data-route="route-3">
+                            <div class="flex justify-between items-center">
+                                <span class="font-medium text-amber-400">Route C - Alternativ</span>
+                                <span class="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">48 dB</span>
+                            </div>
+                            <div class="text-xs opacity-60 mt-1">7.8 km | 16 min | TA-Laerm konform</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 space-y-2">
+                        <button id="btn-render-all" class="btn-cesium w-full">
+                            Alle Routen anzeigen
+                        </button>
+                        <button id="btn-clear" class="btn-cesium w-full" style="background: rgba(255,255,255,0.1);">
+                            Routen loeschen
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Noise Corridor -->
+                <div class="control-panel">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span>🔊</span> Laermkorridor
+                    </h3>
+
+                    <label class="text-sm opacity-70">Korridorbreite: <span id="corridor-width-value">100</span>m</label>
+                    <input type="range" id="corridor-width" class="noise-slider mt-2" min="50" max="300" value="100">
+
+                    <label class="text-sm opacity-70 mt-3 block">Simulierter Pegel: <span id="noise-level-value">50</span> dB</label>
+                    <input type="range" id="noise-level" class="noise-slider mt-2" min="35" max="70" value="50">
+
+                    <button id="btn-show-corridor" class="btn-cesium w-full mt-4">
+                        Korridor anzeigen
+                    </button>
+                </div>
+
+                <!-- Camera Controls -->
+                <div class="control-panel">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span>🎥</span> Kamera
+                    </h3>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="btn-fly-route" class="btn-cesium text-sm">
+                            Entlang Route fliegen
+                        </button>
+                        <button id="btn-reset-view" class="btn-cesium text-sm" style="background: rgba(255,255,255,0.1);">
+                            Ansicht zuruecksetzen
+                        </button>
+                    </div>
+
+                    <div class="mt-3">
+                        <label class="text-sm opacity-70">Flugdauer: <span id="flight-duration-value">30</span>s</label>
+                        <input type="range" id="flight-duration" class="noise-slider mt-2" min="10" max="120" value="30">
+                    </div>
+                </div>
+
+                <!-- Live Tracking -->
+                <div class="control-panel">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span>📡</span> Live Tracking
+                    </h3>
+
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm">Simulation</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggle-simulation">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div id="simulation-status" class="text-xs mt-2 opacity-60">
+                        Status: Inaktiv
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Cesium Globe (Right) -->
+            <div class="lg:col-span-3">
+                <div class="control-panel p-0 relative">
+                    <div id="cesium-container">
+                        <div class="loading-overlay" id="loading-overlay">
+                            <div class="text-center">
+                                <div class="loading-spinner mx-auto mb-4"></div>
+                                <p class="text-sm">CesiumJS wird geladen...</p>
+                                <p class="text-xs opacity-60 mt-1">3D Terrain & Gebaeude</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info Bar -->
+                <div class="control-panel mt-4">
+                    <div class="flex flex-wrap justify-between items-center text-sm">
+                        <div class="flex items-center gap-4">
+                            <span class="opacity-70">Koordinaten:</span>
+                            <span id="coords-display">51.3759°N, 7.6944°E</span>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <span class="opacity-70">Hoehe:</span>
+                            <span id="height-display">500m</span>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <span class="opacity-70">FPS:</span>
+                            <span id="fps-display">60</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="container mx-auto px-4 py-4 text-center text-sm opacity-60">
+        <p>MORPHEUS Dashboard | CesiumJS 3D Globe | Powered by Cesium Ion</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="assets/api-client.js"></script>
+    <script src="assets/cesium-3d.js"></script>
+
+    <script>
+        // Demo-Routendaten
+        const demoRoutes = [
+            {
+                id: 'route-1',
+                name: 'Route A - Optimiert',
+                color: '#00d4ff',
+                distance: 8.5,
+                duration: 18,
+                noiseLevel: 52,
+                compliant: true,
+                waypoints: [
+                    { lat: 51.3759, lng: 7.6944, alt: 100 },
+                    { lat: 51.3780, lng: 7.6980, alt: 120 },
+                    { lat: 51.3810, lng: 7.7020, alt: 110 },
+                    { lat: 51.3850, lng: 7.7080, alt: 130 },
+                    { lat: 51.3880, lng: 7.7120, alt: 100 }
+                ]
+            },
+            {
+                id: 'route-2',
+                name: 'Route B - Standard',
+                color: '#10b981',
+                distance: 9.2,
+                duration: 20,
+                noiseLevel: 58,
+                compliant: true,
+                waypoints: [
+                    { lat: 51.3759, lng: 7.6944, alt: 100 },
+                    { lat: 51.3770, lng: 7.7000, alt: 115 },
+                    { lat: 51.3800, lng: 7.7100, alt: 125 },
+                    { lat: 51.3840, lng: 7.7150, alt: 110 },
+                    { lat: 51.3880, lng: 7.7120, alt: 100 }
+                ]
+            },
+            {
+                id: 'route-3',
+                name: 'Route C - Alternativ',
+                color: '#f59e0b',
+                distance: 7.8,
+                duration: 16,
+                noiseLevel: 48,
+                compliant: true,
+                waypoints: [
+                    { lat: 51.3759, lng: 7.6944, alt: 80 },
+                    { lat: 51.3790, lng: 7.6920, alt: 90 },
+                    { lat: 51.3830, lng: 7.6950, alt: 85 },
+                    { lat: 51.3860, lng: 7.7050, alt: 95 },
+                    { lat: 51.3880, lng: 7.7120, alt: 80 }
+                ]
+            }
+        ];
+
+        let selectedRouteId = 'route-1';
+        let simulationInterval = null;
+
+        // Initialize Cesium
+        async function initCesium() {
+            try {
+                await MORPHEUS_CESIUM.init('cesium-container', {
+                    terrainEnabled: true,
+                    buildingsEnabled: true,
+                    center: { longitude: 7.6944, latitude: 51.3759, height: 2000 }
+                });
+
+                // Loading Overlay entfernen
+                document.getElementById('loading-overlay').style.display = 'none';
+
+                // Routen rendern
+                MORPHEUS_CESIUM.renderRoutes(demoRoutes);
+
+                // FPS-Anzeige aktualisieren
+                updatePerformanceDisplay();
+
+                console.log('[Demo] CesiumJS initialized successfully');
+            } catch (err) {
+                console.error('[Demo] Failed to initialize CesiumJS:', err);
+                document.getElementById('loading-overlay').innerHTML = `
+                    <div class="text-center text-red-400">
+                        <p class="text-lg mb-2">Fehler beim Laden</p>
+                        <p class="text-sm opacity-60">${err.message}</p>
+                        <p class="text-xs mt-4">Hinweis: Cesium Ion Token erforderlich</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Performance Display
+        function updatePerformanceDisplay() {
+            const viewer = MORPHEUS_CESIUM.getViewer();
+            if (!viewer) return;
+
+            setInterval(() => {
+                // FPS (approximiert)
+                document.getElementById('fps-display').textContent =
+                    Math.round(viewer.scene.debugShowFramesPerSecond ? viewer.scene.framesPerSecond : 60);
+
+                // Kameraposition
+                const camera = viewer.camera;
+                const carto = Cesium.Cartographic.fromCartesian(camera.position);
+                const lat = Cesium.Math.toDegrees(carto.latitude).toFixed(4);
+                const lng = Cesium.Math.toDegrees(carto.longitude).toFixed(4);
+                const height = Math.round(carto.height);
+
+                document.getElementById('coords-display').textContent = `${lat}°N, ${lng}°E`;
+                document.getElementById('height-display').textContent = `${height}m`;
+            }, 1000);
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            initCesium();
+
+            // Route Cards
+            document.querySelectorAll('.route-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    document.querySelectorAll('.route-card').forEach(c => c.classList.remove('active'));
+                    card.classList.add('active');
+                    selectedRouteId = card.dataset.route;
+                    MORPHEUS_CESIUM.zoomToRoute(selectedRouteId);
+                });
+            });
+
+            // Alle Routen anzeigen
+            document.getElementById('btn-render-all').addEventListener('click', () => {
+                MORPHEUS_CESIUM.renderRoutes(demoRoutes);
+            });
+
+            // Routen loeschen
+            document.getElementById('btn-clear').addEventListener('click', () => {
+                MORPHEUS_CESIUM.clearRoutes();
+            });
+
+            // Laermkorridor
+            document.getElementById('corridor-width').addEventListener('input', (e) => {
+                document.getElementById('corridor-width-value').textContent = e.target.value;
+            });
+
+            document.getElementById('noise-level').addEventListener('input', (e) => {
+                document.getElementById('noise-level-value').textContent = e.target.value;
+            });
+
+            document.getElementById('btn-show-corridor').addEventListener('click', () => {
+                const width = parseInt(document.getElementById('corridor-width').value);
+                const noiseLevel = parseInt(document.getElementById('noise-level').value);
+                MORPHEUS_CESIUM.renderNoiseCorridor(selectedRouteId, { width, noiseLevel });
+            });
+
+            // Kamera-Flug
+            document.getElementById('flight-duration').addEventListener('input', (e) => {
+                document.getElementById('flight-duration-value').textContent = e.target.value;
+            });
+
+            document.getElementById('btn-fly-route').addEventListener('click', () => {
+                const duration = parseInt(document.getElementById('flight-duration').value);
+                MORPHEUS_CESIUM.flyAlongRoute(selectedRouteId, {
+                    duration,
+                    heightOffset: 80,
+                    onComplete: () => console.log('Flug beendet')
+                });
+            });
+
+            document.getElementById('btn-reset-view').addEventListener('click', () => {
+                MORPHEUS_CESIUM.resetView();
+            });
+
+            // Live Simulation
+            document.getElementById('toggle-simulation').addEventListener('change', (e) => {
+                const statusEl = document.getElementById('simulation-status');
+
+                if (e.target.checked) {
+                    statusEl.textContent = 'Status: Aktiv - Drohne simuliert...';
+                    statusEl.classList.add('text-green-400');
+
+                    let step = 0;
+                    const route = demoRoutes.find(r => r.id === selectedRouteId);
+                    const waypoints = route?.waypoints || demoRoutes[0].waypoints;
+
+                    simulationInterval = setInterval(() => {
+                        const wp1 = waypoints[step % waypoints.length];
+                        const wp2 = waypoints[(step + 1) % waypoints.length];
+
+                        // Interpolation zwischen Wegpunkten
+                        const progress = (Date.now() % 2000) / 2000;
+                        const lat = wp1.lat + (wp2.lat - wp1.lat) * progress;
+                        const lng = wp1.lng + (wp2.lng - wp1.lng) * progress;
+                        const alt = wp1.alt + (wp2.alt - wp1.alt) * progress;
+
+                        // Heading berechnen
+                        const heading = Math.atan2(wp2.lng - wp1.lng, wp2.lat - wp1.lat) * 180 / Math.PI;
+
+                        MORPHEUS_CESIUM.updateDronePosition({
+                            lat, lng, alt,
+                            heading,
+                            droneId: 'MORPH-001'
+                        });
+
+                        if (progress > 0.95) step++;
+                    }, 100);
+                } else {
+                    statusEl.textContent = 'Status: Inaktiv';
+                    statusEl.classList.remove('text-green-400');
+
+                    if (simulationInterval) {
+                        clearInterval(simulationInterval);
+                        simulationInterval = null;
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
