@@ -94,13 +94,18 @@ Diese API bietet Zugriff auf:
 
 # CORS-Middleware für Frontend-Zugriff
 import os
-allowed_origins_env = os.getenv("ALLOWED_ORIGINS", "http://localhost:8000,http://localhost:8080")
+
+allowed_origins_env = os.getenv(
+    "ALLOWED_ORIGINS", "http://localhost:8000,http://localhost:8080"
+)
 allowed_origins = [origin.strip() for origin in allowed_origins_env.split(",")]
-allowed_origins.extend([
-    "http://localhost:3000",
-    "http://127.0.0.1:8000",
-    "http://127.0.0.1:3000",
-])
+allowed_origins.extend(
+    [
+        "http://localhost:3000",
+        "http://127.0.0.1:8000",
+        "http://127.0.0.1:3000",
+    ]
+)
 
 app.add_middleware(
     CORSMiddleware,

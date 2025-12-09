@@ -19,7 +19,15 @@ from datetime import datetime
 from enum import Enum
 from typing import Dict, List, Optional, Tuple
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    HTTPException,
+    Query,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from pydantic import BaseModel, Field, validator
 
 # Lokale Imports - relative Imports für Backend-Modul
@@ -730,12 +738,12 @@ async def verify_audit_hash(
 async def get_dashboard_routes():
     """
     Liefert Flugrouten für Dashboard-Visualisierung.
-    
+
     **Routen:**
     - Route A: Direktroute Labor → Hospital (Blau)
     - Route B: Optimierte Route über Park (Grün)
     - Route C: Lärmvermeidende Route (Orange)
-    
+
     **Korrigiert:** Labor↔Hospital = 0,8 km (nicht 8 km!)
     """
     return {
@@ -789,23 +797,23 @@ async def get_dashboard_routes():
 async def calculate_simple_noise(payload: dict):
     """
     Vereinfachte Lärmberechnung für Dashboard.
-    
+
     **Simple Model:** SPL = LW - 20*log10(distance) - 11
-    
+
     Args:
         payload: {"lat": float, "lng": float, "altitude": float}
-    
+
     Returns:
         Geschätzter Lärmpegel in dB(A)
     """
     # Simple noise calculation
     altitude = payload.get("altitude", 50)  # Default 50m
     distance = max(altitude, 10)  # Mindestens 10m
-    
+
     # Simplified model: SPL = LW - 20*log10(d) - 11
     lw_dba = 75.0  # Typische Drohne
     spl = lw_dba - 20 * math.log10(distance) - 11
-    
+
     return {
         "sound_pressure_level_dba": round(spl, 1),
         "distance_m": distance,
@@ -823,14 +831,14 @@ async def calculate_simple_noise(payload: dict):
 async def get_dashboard_config():
     """
     Liefert Frontend-Konfiguration.
-    
+
     **Wichtig:** API-Key aus Umgebungsvariable laden!
     **Sicherheit:** Google Maps API-Keys sind für Frontend-Nutzung konzipiert
     und sollten mit Domain-Restrictions im Google Cloud Console geschützt werden.
     """
     api_key = os.getenv("GOOGLE_MAPS_API_KEY", "")
     map_id = os.getenv("GOOGLE_MAPS_MAP_ID", "")
-    
+
     return {
         "apiKey": api_key,
         "mapId": map_id if map_id else None,
@@ -846,17 +854,17 @@ async def get_dashboard_config():
 
 class ConnectionManager:
     """Manager für WebSocket-Verbindungen."""
-    
+
     def __init__(self):
         self.active_connections: List[WebSocket] = []
-    
+
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         self.active_connections.append(websocket)
-    
+
     def disconnect(self, websocket: WebSocket):
         self.active_connections.remove(websocket)
-    
+
     async def broadcast(self, message: dict):
         """Sendet Nachricht an alle verbundenen Clients."""
         for connection in self.active_connections:
@@ -874,7 +882,7 @@ manager = ConnectionManager()
 async def websocket_drone_position(websocket: WebSocket):
     """
     WebSocket für Drohnen-Positions-Updates.
-    
+
     **Nachrichtenformat:**
     ```json
     {
@@ -894,12 +902,14 @@ async def websocket_drone_position(websocket: WebSocket):
         while True:
             # Empfange Nachrichten vom Client
             data = await websocket.receive_text()
-            
+
             # Echo zurück an alle Clients (für Demo)
-            await manager.broadcast({
-                "type": "drone-position",
-                "data": data,
-            })
-            
+            await manager.broadcast(
+                {
+                    "type": "drone-position",
+                    "data": data,
+                }
+            )
+
     except WebSocketDisconnect:
         manager.disconnect(websocket)
