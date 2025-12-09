@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description" content="MORPHEUS Dashboard - Drohnen Lärmanalyse mit Leaflet und Google Maps 3D Integration">
+  <title>MORPHEUS Dashboard — Drohnen Lärmanalyse (Iserlohn)</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Premium Dark Theme Styles -->
+  <style>
+    :root {
+      --bg-primary: #0b1220;
+      --bg-secondary: #0f1724;
+      --bg-panel: rgba(15, 23, 36, 0.95);
+      --text-primary: #e6eef8;
+      --text-muted: #94a3b8;
+      --accent-primary: #00d4ff;
+      --accent-secondary: #7c3aed;
+      --border-subtle: rgba(255, 255, 255, 0.03);
+      --glow-primary: rgba(0, 212, 255, 0.3);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(180deg, var(--bg-primary), #020617);
+      color: var(--text-primary);
+      font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    /* Dashboard Panel - Glassmorphism */
+    .dashboard-panel {
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      box-shadow: 0 6px 24px rgba(2, 6, 23, 0.6);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    /* Map Toggle Button */
+    .map-toggle-btn {
+      background: linear-gradient(135deg, #111827, #081024);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      color: var(--text-primary);
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .map-toggle-btn:hover {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 15px var(--glow-primary);
+    }
+
+    .map-toggle-btn.active {
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      border-color: transparent;
+    }
+
+    /* Map Containers */
+    #map, #google-map-3d {
+      width: 100%;
+      height: 70vh;
+      min-height: 500px;
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #google-map-3d {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 10;
+    }
+
+    .map-wrapper {
+      position: relative;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    /* Dark Leaflet Tiles */
+    .leaflet-container {
+      background: transparent;
+    }
+
+    /* Control Buttons */
+    .top-controls {
+      position: absolute;
+      left: 1rem;
+      top: 1rem;
+      z-index: 1400;
+    }
+
+    .control-btn {
+      background: rgba(15, 23, 36, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-primary);
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(8px);
+    }
+
+    .control-btn:hover {
+      background: rgba(30, 40, 60, 0.95);
+      border-color: var(--accent-primary);
+    }
+
+    /* Status Pill */
+    .status-pill {
+      font-size: 0.8rem;
+      padding: 0.4rem 0.75rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .status-pill.connected {
+      color: #10b981;
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .status-pill.error {
+      color: #ef4444;
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    /* Header Gradient Text */
+    .gradient-text {
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Custom Drone Marker */
+    .drone-marker {
+      filter: drop-shadow(0 0 6px rgba(255, 59, 59, 0.6));
+    }
+
+    /* Leaflet Popup Dark Theme */
+    .leaflet-popup-content-wrapper {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    .leaflet-popup-tip {
+      background: var(--bg-secondary);
+    }
+
+    .leaflet-popup-content {
+      margin: 12px;
+    }
+
+    /* Info Footer */
+    .info-footer {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.75rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      #map, #google-map-3d {
+        height: 60vh;
+        min-height: 400px;
+      }
+
+      .top-controls {
+        flex-wrap: wrap;
+      }
+    }
+  </style>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚁</text></svg>">
+</head>
+
+<body class="min-h-screen">
+  <div class="max-w-screen-2xl mx-auto p-4 md:p-6">
+
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 gap-4">
+      <div>
+        <h1 class="text-2xl font-bold gradient-text">MORPHEUS Dashboard</h1>
+        <p class="text-sm text-gray-400">Drohnen-Routen & Lärmzonen — Iserlohn Demo</p>
+      </div>
+
+      <div class="flex items-center gap-3 flex-wrap">
+        <div id="connection-status" class="status-pill">WS: disconnected</div>
+
+        <button id="toggle-3d-btn"
+                class="map-toggle-btn px-4 py-2 rounded-lg text-sm"
+                onclick="toggleMap3D()">
+          Enable Google Maps 3D
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Dashboard Panel -->
+    <main class="dashboard-panel relative p-4">
+
+      <!-- Map Controls -->
+      <div class="top-controls flex gap-2">
+        <button id="btn-sync-view" class="control-btn" title="Sync Leaflet view to Google Maps">
+          Sync View
+        </button>
+        <button id="btn-center-iserlohn" class="control-btn" title="Center map on Iserlohn">
+          Center Iserlohn
+        </button>
+        <button id="btn-center-berlin" class="control-btn" title="Center map on Berlin">
+          Center Berlin
+        </button>
+      </div>
+
+      <!-- Map Wrapper -->
+      <div class="map-wrapper">
+        <div id="map" role="application" aria-label="Leaflet map container"></div>
+        <div id="google-map-3d" role="application" aria-label="Google Maps 3D container"></div>
+      </div>
+
+      <!-- Info Footer -->
+      <div class="info-footer">
+        Leaflet (Dark Tiles) ist Standard. Toggle zu Google Maps 3D für Vektor-Gebäude und Satellitenbilder.
+        Beide Karten werden synchronisiert.
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-6 text-center text-xs text-gray-500">
+      <p>MORPHEUS Dashboard v2.0 — ISO 9613-2 Lärmanalyse & TA Lärm Compliance</p>
+    </footer>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <!-- MORPHEUS Modules -->
+  <script src="assets/api-client.js"></script>
+  <script src="assets/google-maps-3d.js"></script>
+
+  <!-- Main Application Script -->
+  <script>
+    (function () {
+      'use strict';
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // STATE
+      // ═══════════════════════════════════════════════════════════════════════
+
+      let Lmap = null;
+      let leafletRoutes = {};
+      let leafletZones = {};
+      let leafletDroneMarker = null;
+
+      let google3dEnabled = false;
+      let googleInitialized = false;
+      let lastLeafletView = null;
+
+      let wsController = null;
+
+      // DOM Elements
+      const statusEl = document.getElementById('connection-status');
+      const toggleBtn = document.getElementById('toggle-3d-btn');
+      const syncViewBtn = document.getElementById('btn-sync-view');
+      const centerIserlohnBtn = document.getElementById('btn-center-iserlohn');
+      const centerBerlinBtn = document.getElementById('btn-center-berlin');
+
+      // Constants
+      const ISERLOHN_CENTER = [51.373, 7.701];
+      const BERLIN_CENTER = [52.4631, 13.3484];
+      const DEFAULT_ZOOM = 15;
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // STATUS HELPERS
+      // ═══════════════════════════════════════════════════════════════════════
+
+      function setStatus(text, type = 'default') {
+        statusEl.textContent = text;
+        statusEl.classList.remove('connected', 'error');
+        if (type === 'connected') statusEl.classList.add('connected');
+        if (type === 'error') statusEl.classList.add('error');
+      }
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // LEAFLET INITIALIZATION
+      // ═══════════════════════════════════════════════════════════════════════
+
+      function initLeaflet() {
+        // Dark tile layer from CartoDB
+        const darkTiles = L.tileLayer(
+          'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+          {
+            attribution: '&copy; <a href="https://carto.com/">Carto</a> | &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+            maxZoom: 20,
+            subdomains: 'abcd',
+          }
+        );
+
+        Lmap = L.map('map', {
+          center: ISERLOHN_CENTER,
+          zoom: DEFAULT_ZOOM,
+          preferCanvas: true,
+          zoomControl: true,
+        });
+
+        darkTiles.addTo(Lmap);
+
+        // Drone marker (initially hidden)
+        leafletDroneMarker = L.marker([0, 0], {
+          icon: L.divIcon({
+            className: 'drone-marker',
+            html: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L15 9H9L12 2Z" fill="#00d4ff"/>
+              <circle cx="12" cy="14" r="4" fill="#00d4ff" opacity="0.6"/>
+            </svg>`,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12],
+          }),
+          opacity: 0,
+        }).addTo(Lmap);
+
+        // Track view changes
+        Lmap.on('moveend', () => {
+          lastLeafletView = { center: Lmap.getCenter(), zoom: Lmap.getZoom() };
+        });
+
+        console.debug('[Leaflet] Initialized');
+      }
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // LEAFLET RENDERING
+      // ═══════════════════════════════════════════════════════════════════════
+
+      function renderLeafletRoutes(routes) {
+        // Clear existing
+        Object.values(leafletRoutes).forEach(layer => Lmap.removeLayer(layer));
+        leafletRoutes = {};
+
+        (routes || []).forEach(route => {
+          const id = route.id || route.name || Math.random().toString(36).slice(2);
+          const latlngs = (route.points || []).map(p => [p.lat, p.lng]);
+
+          if (latlngs.length === 0) return;
+
+          const polyline = L.polyline(latlngs, {
+            color: route.color || '#22c55e',
+            weight: 4,
+            opacity: 0.9,
+          }).addTo(Lmap);
+
+          polyline.bindPopup(`
+            <strong style="color: ${route.color || '#22c55e'}">${route.name || id}</strong><br/>
+            Punkte: ${latlngs.length}
+          `);
+
+          leafletRoutes[id] = polyline;
+        });
+
+        console.debug(`[Leaflet] Rendered ${routes?.length || 0} routes`);
+      }
+
+      function renderLeafletZones(zones) {
+        // Clear existing
+        Object.values(leafletZones).forEach(layer => Lmap.removeLayer(layer));
+        leafletZones = {};
+
+        (zones || []).forEach(zone => {
+          const coords = (zone.polygon || zone.points || []).map(p => [p.lat, p.lng]);
+
+          if (coords.length < 3) return;
+
+          const fillColor = zone.level >= 3 ? '#ef4444' : zone.level === 2 ? '#f59e0b' : '#10b981';
+
+          const polygon = L.polygon(coords, {
+            color: 'rgba(255,255,255,0.3)',
+            fillColor,
+            fillOpacity: 0.25,
+            weight: 1,
+          }).addTo(Lmap);
+
+          const levelText = zone.level >= 3 ? 'Kritisch' : zone.level === 2 ? 'Warnung' : 'OK';
+          polygon.bindPopup(`<strong>Lärmzone ${zone.id}</strong><br/>Level: ${zone.level} (${levelText})`);
+
+          leafletZones[zone.id] = polygon;
+        });
+
+        console.debug(`[Leaflet] Rendered ${zones?.length || 0} noise zones`);
+      }
+
+      function updateLeafletDrone(payload) {
+        if (!leafletDroneMarker) return;
+
+        const lat = Number(payload.lat);
+        const lng = Number(payload.lng);
+
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+        leafletDroneMarker.setLatLng([lat, lng]);
+        leafletDroneMarker.setOpacity(1);
+
+        if (payload.follow === true) {
+          Lmap.panTo([lat, lng]);
+        }
+      }
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // GOOGLE MAPS 3D
+      // ═══════════════════════════════════════════════════════════════════════
+
+      async function initGoogle3D(center, zoom) {
+        if (!window.MORPHEUS_GMAPS || !window.MORPHEUS_API) {
+          console.error('MORPHEUS_GMAPS or MORPHEUS_API not loaded');
+          return false;
+        }
+
+        let optCenter;
+        if (center && typeof center.lat === 'number') {
+          optCenter = { lat: center.lat, lng: center.lng };
+        } else if (Array.isArray(center)) {
+          optCenter = { lat: center[0], lng: center[1] };
+        }
+
+        try {
+          await MORPHEUS_GMAPS.init('google-map-3d', {
+            center: optCenter,
+            zoom: zoom || DEFAULT_ZOOM,
+            use3D: true,
+          });
+          googleInitialized = true;
+          console.debug('[Google Maps 3D] Initialized');
+          return true;
+        } catch (err) {
+          console.error('[Google Maps 3D] Failed to initialize:', err);
+          googleInitialized = false;
+          return false;
+        }
+      }
+
+      function syncGoogleToLeaflet() {
+        if (!google3dEnabled || !googleInitialized) return;
+
+        const center = lastLeafletView?.center || Lmap.getCenter();
+        const zoom = lastLeafletView?.zoom || Lmap.getZoom();
+
+        MORPHEUS_GMAPS.panTo(center.lat, center.lng, zoom);
+      }
+
+      async function toggleMap3D() {
+        google3dEnabled = !google3dEnabled;
+
+        const gEl = document.getElementById('google-map-3d');
+        const lEl = document.getElementById('map');
+
+        if (google3dEnabled) {
+          // Show Google Maps
+          gEl.style.display = 'block';
+          toggleBtn.textContent = 'Disable Google Maps 3D';
+          toggleBtn.classList.add('active');
+
+          lastLeafletView = { center: Lmap.getCenter(), zoom: Lmap.getZoom() };
+
+          const success = await initGoogle3D(
+            { lat: lastLeafletView.center.lat, lng: lastLeafletView.center.lng },
+            lastLeafletView.zoom
+          );
+
+          if (success) {
+            // Sync routes to Google Maps
+            try {
+              const routes = await MORPHEUS_API.fetchRoutes();
+              MORPHEUS_GMAPS.renderRoutes(routes || []);
+            } catch (err) {
+              console.warn('Failed to fetch routes for Google Maps:', err);
+            }
+
+            // Sync existing zones
+            const zones = Object.entries(leafletZones).map(([id, poly], idx) => {
+              const latlngs = poly.getLatLngs()[0] || [];
+              return {
+                id,
+                level: 1,
+                polygon: latlngs.map(p => ({ lat: p.lat, lng: p.lng })),
+              };
+            });
+            if (zones.length) {
+              MORPHEUS_GMAPS.renderNoiseZones(zones);
+            }
+          }
+        } else {
+          // Hide Google Maps
+          gEl.style.display = 'none';
+          toggleBtn.textContent = 'Enable Google Maps 3D';
+          toggleBtn.classList.remove('active');
+
+          // Restore Leaflet view
+          if (lastLeafletView?.center) {
+            Lmap.setView(
+              [lastLeafletView.center.lat, lastLeafletView.center.lng],
+              lastLeafletView.zoom
+            );
+          }
+        }
+      }
+
+      // Export for button onclick
+      window.toggleMap3D = toggleMap3D;
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // WEBSOCKET CONNECTION
+      // ═══════════════════════════════════════════════════════════════════════
+
+      function connectWebSocket() {
+        if (!window.MORPHEUS_API?.connectWs) {
+          setStatus('WS: API unavailable', 'error');
+          return;
+        }
+
+        try {
+          setStatus('WS: connecting...');
+
+          wsController = MORPHEUS_API.connectWs(
+            // onMessage
+            (msg) => {
+              if (!msg) return;
+
+              // Forward to Google Maps handler
+              if (window.MORPHEUS_GMAPS?.handleLiveUpdate) {
+                try {
+                  MORPHEUS_GMAPS.handleLiveUpdate(msg);
+                } catch (e) {
+                  console.warn('[WS] Google Maps handler error:', e);
+                }
+              }
+
+              // Process for Leaflet
+              const type = msg.type || '';
+              const data = msg.data || msg;
+
+              if (type === 'drone-position' || (msg.lat && msg.lng)) {
+                updateLeafletDrone(type === 'drone-position' ? data : msg);
+              } else if (type === 'route-update') {
+                const routes = Array.isArray(data) ? data : [data];
+                renderLeafletRoutes(routes);
+              } else if (type === 'noise-update') {
+                renderLeafletZones(Array.isArray(data) ? data : [data]);
+              }
+            },
+            // onOpen
+            () => {
+              setStatus('WS: connected', 'connected');
+            },
+            // onClose
+            () => {
+              setStatus('WS: disconnected');
+              // Reconnect after delay
+              setTimeout(connectWebSocket, 3000);
+            },
+            // onError
+            () => {
+              setStatus('WS: error', 'error');
+            }
+          );
+        } catch (err) {
+          console.error('[WS] Connection failed:', err);
+          setStatus('WS: unavailable', 'error');
+        }
+      }
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // INITIAL DATA LOAD
+      // ═══════════════════════════════════════════════════════════════════════
+
+      async function loadInitialData() {
+        try {
+          const routes = await MORPHEUS_API.fetchRoutes();
+          renderLeafletRoutes(routes || []);
+        } catch (err) {
+          console.warn('[Init] Failed to fetch routes:', err);
+        }
+      }
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // EVENT LISTENERS
+      // ═══════════════════════════════════════════════════════════════════════
+
+      syncViewBtn.addEventListener('click', () => {
+        lastLeafletView = { center: Lmap.getCenter(), zoom: Lmap.getZoom() };
+        if (google3dEnabled && googleInitialized) {
+          syncGoogleToLeaflet();
+        }
+      });
+
+      centerIserlohnBtn.addEventListener('click', () => {
+        Lmap.setView(ISERLOHN_CENTER, DEFAULT_ZOOM);
+        lastLeafletView = { center: Lmap.getCenter(), zoom: Lmap.getZoom() };
+        if (google3dEnabled) syncGoogleToLeaflet();
+      });
+
+      centerBerlinBtn.addEventListener('click', () => {
+        Lmap.setView(BERLIN_CENTER, DEFAULT_ZOOM);
+        lastLeafletView = { center: Lmap.getCenter(), zoom: Lmap.getZoom() };
+        if (google3dEnabled) syncGoogleToLeaflet();
+      });
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // INITIALIZATION
+      // ═══════════════════════════════════════════════════════════════════════
+
+      document.addEventListener('DOMContentLoaded', async () => {
+        if (!window.MORPHEUS_API) {
+          console.error('MORPHEUS_API not loaded. Ensure assets/api-client.js is included.');
+          setStatus('API: missing', 'error');
+          return;
+        }
+
+        // Initialize Leaflet
+        initLeaflet();
+
+        // Try to fetch config (for Google Maps API key check)
+        try {
+          await MORPHEUS_API.fetchConfig();
+        } catch (err) {
+          console.debug('[Init] Backend config not available:', err.message);
+        }
+
+        // Load initial data
+        await loadInitialData();
+
+        // Connect WebSocket
+        connectWebSocket();
+
+        // Check URL params for auto-enable Google 3D
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('g3d') === '1') {
+          toggleMap3D();
+        }
+
+        console.info('MORPHEUS Iserlohn Dashboard initialized');
+      });
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // PUBLIC API (for debugging)
+      // ═══════════════════════════════════════════════════════════════════════
+
+      window.MORPHEUS_DASH = {
+        getLeafletMap: () => Lmap,
+        getLeafletRoutes: () => leafletRoutes,
+        getLeafletZones: () => leafletZones,
+        isGoogleInitialized: () => googleInitialized,
+        isGoogle3DEnabled: () => google3dEnabled,
+      };
+    })();
+  </script>
+</body>
+</html>
