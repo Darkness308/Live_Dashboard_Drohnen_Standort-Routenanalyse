@@ -518,22 +518,20 @@ class TestDataValidation:
 
     def test_bbox_validation_correct_order(self, loader):
         """Test: BBox muss min < max haben."""
-        # Korrekte BBox
-        valid_bbox = (7.6, 51.3, 7.7, 51.4)
         # TODO: Implementiere _validate_bbox
+        # Korrekte BBox wäre: (7.6, 51.3, 7.7, 51.4)
         assert True
 
     def test_bbox_validation_wrong_order(self, loader):
         """Test: Falsche BBox-Reihenfolge wird erkannt."""
-        invalid_bbox = (7.7, 51.4, 7.6, 51.3)  # max < min
         # TODO: Implementiere _validate_bbox
+        # Falsche BBox wäre: (7.7, 51.4, 7.6, 51.3) - max < min
         assert True
 
     def test_bbox_validation_nrw_bounds(self, loader):
         """Test: BBox sollte innerhalb NRW liegen."""
-        # Koordinaten außerhalb NRW (Bayern)
-        outside_bbox = (12.0, 48.0, 12.5, 48.5)
         # TODO: Implementiere _validate_bbox mit NRW-Bounds-Check
+        # Koordinaten außerhalb NRW (Bayern) wären: (12.0, 48.0, 12.5, 48.5)
         assert True
 
     def test_geojson_validation(self, loader, mock_wfs_response):
@@ -543,8 +541,8 @@ class TestDataValidation:
 
     def test_geojson_validation_invalid(self, loader):
         """Test: Ungültiges GeoJSON wird erkannt."""
-        invalid_geojson = {"invalid": "data"}
         # TODO: Implementiere _validate_geojson
+        # Ungültiges GeoJSON wäre: {"invalid": "data"}
         assert True
 
 
