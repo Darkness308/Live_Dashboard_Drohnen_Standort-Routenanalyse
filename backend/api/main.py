@@ -13,6 +13,7 @@ Start:
 """
 
 import logging
+import os
 import time
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
@@ -93,8 +94,6 @@ Diese API bietet Zugriff auf:
 
 
 # CORS-Middleware für Frontend-Zugriff
-import os
-
 allowed_origins_env = os.getenv(
     "ALLOWED_ORIGINS", "http://localhost:8000,http://localhost:8080"
 )
