@@ -711,3 +711,196 @@ async def verify_audit_hash(
             }
 
     return {"verified": False, "message": "Hash not found in audit trail"}
+
+
+# =============================================================================
+# Dashboard Endpoints (für Google Maps 3D Integration)
+# =============================================================================
+
+
+@router.get(
+    "/routes",
+    tags=["Dashboard"],
+    summary="Routen für Dashboard",
+    description="Liefert vordefinierte Flugrouten für das Dashboard.",
+)
+async def get_dashboard_routes():
+    """
+    Liefert Flugrouten für Dashboard-Visualisierung.
+    
+    **Routen:**
+    - Route A: Direktroute Labor → Hospital (Blau)
+    - Route B: Optimierte Route über Park (Grün)
+    - Route C: Lärmvermeidende Route (Orange)
+    
+    **Korrigiert:** Labor↔Hospital = 0,8 km (nicht 8 km!)
+    """
+    return {
+        "routes": [
+            {
+                "id": "route-a",
+                "name": "Route A - Direktroute",
+                "color": "#0000FF",
+                "distance_km": 0.8,
+                "points": [
+                    {"lat": 51.373000, "lng": 7.701000},
+                    {"lat": 51.375000, "lng": 7.703000},
+                    {"lat": 51.377000, "lng": 7.705000},
+                ],
+            },
+            {
+                "id": "route-b",
+                "name": "Route B - Optimiert",
+                "color": "#00FF00",
+                "distance_km": 0.9,
+                "points": [
+                    {"lat": 51.373000, "lng": 7.701000},
+                    {"lat": 51.374000, "lng": 7.702000},
+                    {"lat": 51.376000, "lng": 7.704000},
+                    {"lat": 51.377000, "lng": 7.705000},
+                ],
+            },
+            {
+                "id": "route-c",
+                "name": "Route C - Lärmvermeidend",
+                "color": "#FF8800",
+                "distance_km": 1.0,
+                "points": [
+                    {"lat": 51.373000, "lng": 7.701000},
+                    {"lat": 51.373500, "lng": 7.701500},
+                    {"lat": 51.375500, "lng": 7.703500},
+                    {"lat": 51.376500, "lng": 7.704500},
+                    {"lat": 51.377000, "lng": 7.705000},
+                ],
+            },
+        ]
+    }
+
+
+@router.post(
+    "/noise/calculate",
+    tags=["Dashboard"],
+    summary="Einfache Lärmberechnung",
+    description="Vereinfachte Lärmberechnung für Dashboard (Simple Model).",
+)
+async def calculate_simple_noise(payload: dict):
+    """
+    Vereinfachte Lärmberechnung für Dashboard.
+    
+    **Simple Model:** SPL = LW - 20*log10(distance) - 11
+    
+    Args:
+        payload: {"lat": float, "lng": float, "altitude": float}
+    
+    Returns:
+        Geschätzter Lärmpegel in dB(A)
+    """
+    import math
+    
+    # Simple noise calculation
+    altitude = payload.get("altitude", 50)  # Default 50m
+    distance = max(altitude, 10)  # Mindestens 10m
+    
+    # Simplified model: SPL = LW - 20*log10(d) - 11
+    lw_dba = 75.0  # Typische Drohne
+    spl = lw_dba - 20 * math.log10(distance) - 11
+    
+    return {
+        "sound_pressure_level_dba": round(spl, 1),
+        "distance_m": distance,
+        "source_lw_dba": lw_dba,
+        "model": "simplified",
+    }
+
+
+@router.get(
+    "/config",
+    tags=["Dashboard"],
+    summary="Dashboard Konfiguration",
+    description="Liefert Konfigurationswerte für das Frontend (API-Keys, etc.).",
+)
+async def get_dashboard_config():
+    """
+    Liefert Frontend-Konfiguration.
+    
+    **Wichtig:** API-Key aus Umgebungsvariable laden!
+    """
+    import os
+    
+    api_key = os.getenv("GOOGLE_MAPS_API_KEY", "")
+    map_id = os.getenv("GOOGLE_MAPS_MAP_ID", "")
+    
+    return {
+        "apiKey": api_key,
+        "mapId": map_id if map_id else None,
+        "center": {"lat": 51.373, "lng": 7.701},
+        "zoom": 17,
+    }
+
+
+# =============================================================================
+# WebSocket Endpoint für Live-Updates
+# =============================================================================
+
+from fastapi import WebSocket, WebSocketDisconnect
+
+
+class ConnectionManager:
+    """Manager für WebSocket-Verbindungen."""
+    
+    def __init__(self):
+        self.active_connections: List[WebSocket] = []
+    
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+    
+    def disconnect(self, websocket: WebSocket):
+        self.active_connections.remove(websocket)
+    
+    async def broadcast(self, message: dict):
+        """Sendet Nachricht an alle verbundenen Clients."""
+        import json
+        for connection in self.active_connections:
+            try:
+                await connection.send_text(json.dumps(message))
+            except:
+                pass  # Ignoriere fehlerhafte Verbindungen
+
+
+manager = ConnectionManager()
+
+
+@router.websocket("/ws/drone-position")
+async def websocket_drone_position(websocket: WebSocket):
+    """
+    WebSocket für Drohnen-Positions-Updates.
+    
+    **Nachrichtenformat:**
+    ```json
+    {
+        "type": "drone-position",
+        "data": {
+            "lat": 51.373,
+            "lng": 7.701,
+            "altitude": 50,
+            "heading": 142,
+            "speed": 15.5
+        }
+    }
+    ```
+    """
+    await manager.connect(websocket)
+    try:
+        while True:
+            # Empfange Nachrichten vom Client
+            data = await websocket.receive_text()
+            
+            # Echo zurück an alle Clients (für Demo)
+            await manager.broadcast({
+                "type": "drone-position",
+                "data": data,
+            })
+            
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
