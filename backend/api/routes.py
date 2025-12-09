@@ -359,7 +359,7 @@ async def calculate_noise(
 
         # Berechnung durchführen
         result = calculator.calculate(
-            source, receiver, use_octave_bands=request.use_octave_bands
+            source, receiver, octave_bands=request.use_octave_bands
         )
 
         return CalculationResultResponse(
@@ -547,8 +547,7 @@ async def load_alkis_data(
             bbox=(bbox.xmin, bbox.ymin, bbox.xmax, bbox.ymax), srs=bbox.srs
         )
 
-        # Audit-Log im Hintergrund schreiben
-        background_tasks.add_task(loader._flush_audit_log)
+        # Audit-Log wird automatisch in _log_audit geschrieben
 
         return {
             "status": "success",
@@ -599,8 +598,7 @@ async def load_noise_mapping(
             bbox=(bbox.xmin, bbox.ymin, bbox.xmax, bbox.ymax), noise_type=noise_type
         )
 
-        if background_tasks:
-            background_tasks.add_task(loader._flush_audit_log)
+        # Audit-Log wird automatisch in _log_audit geschrieben
 
         return {
             "status": "success",
