@@ -13,6 +13,7 @@ Start:
 """
 
 import logging
+import os
 import time
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
@@ -103,18 +104,29 @@ Diese API bietet Zugriff auf:
 
 
 # CORS-Middleware für Frontend-Zugriff
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:8000",
+allowed_origins_env = os.getenv(
+    "ALLOWED_ORIGINS", "http://localhost:8000,http://localhost:8080"
+)
+allowed_origins = [origin.strip() for origin in allowed_origins_env.split(",")]
+allowed_origins.extend(
+    [
         "http://localhost:3000",
         "http://127.0.0.1:8000",
         "http://127.0.0.1:3000",
+claude/review-drone-acoustic-repos-01NdD96qep12urAjs3HjNU1n
         # GitHub Pages
         "https://darkness308.github.io",
         # Alle Origins erlauben fuer Entwicklung (in Produktion einschraenken)
         "*",
     ],
+
+    ]
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+main
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
@@ -144,6 +156,8 @@ async def log_requests(request: Request, call_next):
 
 # API-Router einbinden
 app.include_router(api_router, prefix="/api/v1")
+# Dashboard-Endpoints ohne v1-Prefix (für Google Maps Integration)
+app.include_router(api_router, prefix="/api")
 
 # WebSocket-Router einbinden
 app.include_router(ws_router)
