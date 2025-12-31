@@ -42,7 +42,7 @@ morpheus-dashboard/
 │   ├── models/
 │   │   ├── __init__.py
 │   │   └── schemas.py            # Pydantic Validierung
-│   ├── api/                      # FastAPI Endpoints (TODO)
+│   ├── api/                      # FastAPI REST-Endpoints
 │   ├── utils/                    # Hilfsfunktionen
 │   └── tests/                    # Unit Tests
 ├── .github/

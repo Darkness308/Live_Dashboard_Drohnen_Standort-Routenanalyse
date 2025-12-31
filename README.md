@@ -261,14 +261,18 @@ Das Projekt unterstützt automatische Fehlerbehebung:
 3. **Dependency Updates**: Dependabot aktiviert
 4. **Error Recovery**: Retry-Logik für WFS-Anfragen
 
-## 🌐 API Endpoints (geplant)
+## 🌐 API Endpoints
 
 ```
-POST /api/v1/calculate/noise
-GET  /api/v1/routes/{route_id}
-GET  /api/v1/immissionsorte
-GET  /api/v1/compliance/report/{route_id}
-GET  /api/v1/audit/trail
+POST /api/v1/calculate/noise      # ISO 9613-2 Berechnung
+POST /api/v1/calculate/grid       # Rasterberechnung für Lärmkarten
+POST /api/v1/compliance/check     # TA Lärm Compliance-Prüfung
+GET  /api/v1/compliance/limits    # TA Lärm Grenzwerte
+POST /api/v1/geodata/alkis        # ALKIS Flurstücke
+POST /api/v1/geodata/noise        # Lärmkartierung NRW
+GET  /api/v1/geodata/services/status  # WFS Service Status
+GET  /api/v1/audit/trail          # Audit-Log (gerichtsfest)
+WS   /ws/drone-position           # WebSocket Live-Tracking
 ```
 
 ## 📝 Lizenz
@@ -286,15 +290,21 @@ Bei Fragen oder Problemen erstellen Sie bitte ein [Issue](https://github.com/Dar
 
 ## 🔮 Roadmap
 
+### Abgeschlossen
 - [x] Leaflet.js Integration
 - [x] Flotten-Dashboard mit Live-Updates
 - [x] TA-Lärm Monitoring Dashboard
 - [x] ISO 9613-2 Backend-Implementierung
 - [x] Geoportal NRW WFS Integration
-- [ ] FastAPI REST-Endpoints
-- [ ] CesiumJS 3D-Visualisierung
-- [ ] CityGML LoD2 Parser
-- [ ] DWD Wetter-Integration
+- [x] FastAPI REST-Endpoints
+- [x] CesiumJS 3D-Visualisierung
+- [x] DWD Wetter-Integration
+- [x] Google Maps 3D Integration
+- [x] WebSocket Live-Tracking
+- [x] NumPy/Numba Performance-Optimierung
+
+### In Planung
+- [ ] CityGML LoD2 Parser (Gebäudeabschirmung)
 - [ ] PDF/CSV Export
 - [ ] Mobile App
 

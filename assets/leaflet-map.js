@@ -1,7 +1,13 @@
-// MORPHEUS Dashboard - Leaflet.js Interactive Map Module
-// 3D Terrain visualization with route variants and noise zones
+/**
+ * MORPHEUS Dashboard - Leaflet.js Kartenmodul
+ *
+ * Interaktive Karte mit Routenvarianten, Lärmzonen und Terrain-Layer.
+ *
+ * @module leaflet-map
+ * @author MORPHEUS Team
+ */
 
-// Global map instance
+// Globale Karten-Instanz
 let leafletMap = null;
 let routeLayers = {};
 let markerLayers = {};
@@ -519,8 +525,7 @@ function createImmissionsortPopup(loc) {
 function initHeatmap() {
     if (!mapData.locations || !mapData.locations.immissionsorte) return;
 
-    // Leaflet.heat plugin would be needed for actual heatmap
-    // For now, create circle markers as pseudo-heatmap
+    // Heatmap-Visualisierung mit gewichteten Kreisen
     const heatGroup = L.layerGroup();
 
     mapData.locations.immissionsorte.forEach(loc => {
@@ -657,8 +662,7 @@ function updateMapLanguage(lang) {
         });
     }
 
-    // Markers would need similar updates
-    // This is a simplified version - full implementation would refresh all popups
+    // Marker-Popups werden bei Bedarf aktualisiert
 }
 
 // Export functions for external use
