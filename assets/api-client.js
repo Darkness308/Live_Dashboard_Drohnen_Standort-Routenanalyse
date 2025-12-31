@@ -261,7 +261,7 @@ const MORPHEUS_API = (function () {
   // ═══════════════════════════════════════════════════════════════════════════
 
   /**
-   * GET /api/routes
+   * GET /api/v1/routes
    * Fetch all available drone routes
    *
    * @returns {Promise<Route[]>}
@@ -272,11 +272,11 @@ const MORPHEUS_API = (function () {
    * routes.forEach(r => console.log(r.name, r.distance));
    */
   async function fetchRoutes() {
-    return _fetchJson(CONFIG.basePath + '/api/routes');
+    return _fetchJson(CONFIG.basePath + '/api/v1/routes');
   }
 
   /**
-   * GET /api/routes/:id
+   * GET /api/v1/routes/:id
    * Fetch a specific route by ID
    *
    * @param {string} routeId - Route identifier
@@ -285,11 +285,11 @@ const MORPHEUS_API = (function () {
    */
   async function fetchRoute(routeId) {
     if (!routeId) throw createError('Route ID required', 400, 'INVALID_PARAM');
-    return _fetchJson(`${CONFIG.basePath}/api/routes/${encodeURIComponent(routeId)}`);
+    return _fetchJson(`${CONFIG.basePath}/api/v1/routes/${encodeURIComponent(routeId)}`);
   }
 
   /**
-   * POST /api/noise/calculate
+   * POST /api/v1/calculate/noise
    * Calculate noise levels for a given route
    *
    * @param {NoiseCalculationRequest} payload - Calculation request
@@ -308,7 +308,7 @@ const MORPHEUS_API = (function () {
       throw createError('Route data required', 400, 'INVALID_PARAM');
     }
 
-    return _fetchJson(CONFIG.basePath + '/api/noise/calculate', {
+    return _fetchJson(CONFIG.basePath + '/api/v1/calculate/noise', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -316,47 +316,47 @@ const MORPHEUS_API = (function () {
   }
 
   /**
-   * GET /api/immissionsorte
+   * GET /api/v1/immissionsorte
    * Fetch all measurement points (Immissionsorte)
    *
    * @returns {Promise<Object[]>}
    * @throws {ApiError}
    */
   async function fetchImmissionsorte() {
-    return _fetchJson(CONFIG.basePath + '/api/immissionsorte');
+    return _fetchJson(CONFIG.basePath + '/api/v1/immissionsorte');
   }
 
   /**
-   * GET /api/drones
+   * GET /api/v1/drones
    * Fetch all registered drones
    *
    * @returns {Promise<Object[]>}
    * @throws {ApiError}
    */
   async function fetchDrones() {
-    return _fetchJson(CONFIG.basePath + '/api/drones');
+    return _fetchJson(CONFIG.basePath + '/api/v1/drones');
   }
 
   /**
-   * GET /api/config
+   * GET /api/v1/config
    * Fetch frontend configuration (map keys, feature flags, etc.)
    *
    * @returns {Promise<{apiKey?: string, mapId?: string, features?: Object}>}
    * @throws {ApiError}
    */
   async function fetchConfig() {
-    return _fetchJson(CONFIG.basePath + '/api/config');
+    return _fetchJson(CONFIG.basePath + '/api/v1/config');
   }
 
   /**
-   * GET /api/health
+   * GET /health
    * Check backend health status
    *
    * @returns {Promise<{status: string, version: string, timestamp: string}>}
    * @throws {ApiError}
    */
   async function healthCheck() {
-    return _fetchJson(CONFIG.basePath + '/api/health', {}, { useCache: false });
+    return _fetchJson(CONFIG.basePath + '/health', {}, { useCache: false });
   }
 
   // ═══════════════════════════════════════════════════════════════════════════

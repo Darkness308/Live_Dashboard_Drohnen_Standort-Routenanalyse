@@ -26,8 +26,50 @@ const taLaermLimits = {
     hospital_area: { day: 50, night: 35, name_de: 'Klinikumgebung', name_en: 'Hospital Area' }
 };
 
-// Initialize noise monitoring state
-function initNoiseState() {
+// Initialize noise monitoring state - versucht API, fällt auf Mock zurück
+async function initNoiseState() {
+    // Versuche Daten von API zu laden
+    if (typeof MORPHEUS_API !== 'undefined') {
+        try {
+            const response = await MORPHEUS_API.fetchImmissionsorte();
+            if (response && response.immissionsorte) {
+                // API-Daten in lokales Format konvertieren
+                noiseState.immissionsorte = response.immissionsorte.map(io => ({
+                    id: io.id,
+                    name_de: io.name,
+                    name_en: io.name,
+                    type: io.type,
+                    currentLevel: io.current_level_db,
+                    peakLevel: io.current_level_db + 6,
+                    avgLevel24h: io.current_level_db - 3,
+                    limit: { day: io.limit_day_db, night: io.limit_night_db },
+                    coordinates: [io.coordinates.lat, io.coordinates.lng],
+                    distanceToRoute: io.distance_to_route_m,
+                    flightsPerHour: io.flights_per_hour,
+                    complaintsLast30d: io.complaints_30d,
+                    lastMeasurement: new Date(),
+                    status: io.compliant ? 'compliant' : 'critical'
+                }));
+
+                console.info('Noise-Daten von API geladen:', response.count, 'Immissionsorte');
+
+                // Generate 24h measurements
+                generateDailyMeasurements();
+                calculateDailyStats();
+                noiseState.lastUpdate = new Date();
+                return;
+            }
+        } catch (error) {
+            console.warn('API nicht erreichbar, nutze lokale Daten:', error.message);
+        }
+    }
+
+    // Fallback: Lokale Mock-Daten
+    initNoiseStateFallback();
+}
+
+// Fallback: Lokale Mock-Daten
+function initNoiseStateFallback() {
     // 10 critical measurement points
     noiseState.immissionsorte = [
         {

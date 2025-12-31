@@ -713,3 +713,314 @@ async def verify_audit_hash(
             }
 
     return {"verified": False, "message": "Hash not found in audit trail"}
+
+
+# ============================================================================
+# FRONTEND DATA ENDPOINTS
+# ============================================================================
+
+
+# Demo-Daten für Routen (würden in Produktion aus DB kommen)
+DEMO_ROUTES = [
+    {
+        "id": "route_a",
+        "name": "Route A - Optimierte Lärmreduzierung",
+        "name_en": "Route A - Optimized Noise Reduction",
+        "description": "Umfahrt über Gewerbegebiet, minimale Wohngebietsexposition",
+        "color": "#EF4444",
+        "distance_km": 12.3,
+        "duration_min": 8,
+        "noise_exposure_db": 48,
+        "energy_consumption_percent": 75,
+        "ta_compliant": True,
+        "waypoints": [
+            {"lat": 52.4800, "lng": 13.3500, "alt": 50},
+            {"lat": 52.4850, "lng": 13.3600, "alt": 55},
+            {"lat": 52.4900, "lng": 13.3700, "alt": 50},
+            {"lat": 52.4950, "lng": 13.3800, "alt": 45},
+            {"lat": 52.5000, "lng": 13.3850, "alt": 40},
+        ],
+    },
+    {
+        "id": "route_b",
+        "name": "Route B - Standardroute",
+        "name_en": "Route B - Standard Route",
+        "description": "Direkter Weg, moderate Lärmbelastung",
+        "color": "#3B82F6",
+        "distance_km": 9.8,
+        "duration_min": 6,
+        "noise_exposure_db": 55,
+        "energy_consumption_percent": 65,
+        "ta_compliant": True,
+        "waypoints": [
+            {"lat": 52.4800, "lng": 13.3500, "alt": 50},
+            {"lat": 52.4870, "lng": 13.3650, "alt": 50},
+            {"lat": 52.4940, "lng": 13.3780, "alt": 50},
+            {"lat": 52.5000, "lng": 13.3850, "alt": 40},
+        ],
+    },
+    {
+        "id": "route_c",
+        "name": "Route C - Schnellroute",
+        "name_en": "Route C - Fast Route",
+        "description": "Kürzester Weg, höhere Lärmbelastung",
+        "color": "#10B981",
+        "distance_km": 8.2,
+        "duration_min": 5,
+        "noise_exposure_db": 62,
+        "energy_consumption_percent": 58,
+        "ta_compliant": False,
+        "waypoints": [
+            {"lat": 52.4800, "lng": 13.3500, "alt": 50},
+            {"lat": 52.4900, "lng": 13.3675, "alt": 50},
+            {"lat": 52.5000, "lng": 13.3850, "alt": 40},
+        ],
+    },
+]
+
+# Demo-Daten für Drohnen
+DEMO_DRONES = [
+    {
+        "id": "AUR-001",
+        "name": "Auriol Alpha",
+        "model": "Auriol X5",
+        "status": "active",
+        "battery_percent": 78,
+        "position": {"lat": 52.4850, "lng": 13.3620, "alt": 55},
+        "destination": "Charité Mitte",
+        "eta_minutes": 4,
+        "current_route": "route_a",
+        "flights_today": 12,
+        "payload_kg": 1.5,
+    },
+    {
+        "id": "AUR-002",
+        "name": "Auriol Beta",
+        "model": "Auriol X5",
+        "status": "active",
+        "battery_percent": 92,
+        "position": {"lat": 52.4920, "lng": 13.3750, "alt": 50},
+        "destination": "Vivantes Neukölln",
+        "eta_minutes": 6,
+        "current_route": "route_b",
+        "flights_today": 8,
+        "payload_kg": 2.0,
+    },
+    {
+        "id": "AUR-003",
+        "name": "Auriol Gamma",
+        "model": "Auriol X5",
+        "status": "charging",
+        "battery_percent": 35,
+        "position": None,
+        "destination": None,
+        "eta_minutes": None,
+        "current_route": None,
+        "flights_today": 15,
+        "payload_kg": 0,
+    },
+    {
+        "id": "AUR-004",
+        "name": "Auriol Delta",
+        "model": "Auriol X5",
+        "status": "maintenance",
+        "battery_percent": 100,
+        "position": None,
+        "destination": None,
+        "eta_minutes": None,
+        "current_route": None,
+        "flights_today": 0,
+        "payload_kg": 0,
+    },
+    {
+        "id": "AUR-005",
+        "name": "Auriol Epsilon",
+        "model": "Auriol X5",
+        "status": "active",
+        "battery_percent": 65,
+        "position": {"lat": 52.4780, "lng": 13.3580, "alt": 45},
+        "destination": "DRK Westend",
+        "eta_minutes": 3,
+        "current_route": "route_a",
+        "flights_today": 10,
+        "payload_kg": 1.8,
+    },
+]
+
+# Demo-Daten für Immissionsorte
+DEMO_IMMISSIONSORTE = [
+    {
+        "id": "io_001",
+        "name": "Wohngebiet Friedenau",
+        "type": "allgemeines_wohngebiet",
+        "coordinates": {"lat": 52.4650, "lng": 13.3350},
+        "current_level_db": 52,
+        "limit_day_db": 55,
+        "limit_night_db": 40,
+        "compliant": True,
+        "distance_to_route_m": 85,
+        "flights_per_hour": 5,
+        "complaints_30d": 0,
+    },
+    {
+        "id": "io_002",
+        "name": "Schule Am Park",
+        "type": "kurgebiet",
+        "coordinates": {"lat": 52.4720, "lng": 13.3280},
+        "current_level_db": 48,
+        "limit_day_db": 45,
+        "limit_night_db": 35,
+        "compliant": False,
+        "distance_to_route_m": 120,
+        "flights_per_hour": 4,
+        "complaints_30d": 2,
+    },
+    {
+        "id": "io_003",
+        "name": "Seniorenheim Lichterfelde",
+        "type": "krankenhaus",
+        "coordinates": {"lat": 52.4580, "lng": 13.3120},
+        "current_level_db": 44,
+        "limit_day_db": 45,
+        "limit_night_db": 35,
+        "compliant": True,
+        "distance_to_route_m": 200,
+        "flights_per_hour": 3,
+        "complaints_30d": 0,
+    },
+    {
+        "id": "io_004",
+        "name": "Mischgebiet Steglitz",
+        "type": "mischgebiet",
+        "coordinates": {"lat": 52.4550, "lng": 13.3420},
+        "current_level_db": 58,
+        "limit_day_db": 60,
+        "limit_night_db": 45,
+        "compliant": True,
+        "distance_to_route_m": 45,
+        "flights_per_hour": 8,
+        "complaints_30d": 1,
+    },
+    {
+        "id": "io_005",
+        "name": "Gewerbegebiet Tempelhof",
+        "type": "gewerbegebiet",
+        "coordinates": {"lat": 52.4720, "lng": 13.3680},
+        "current_level_db": 62,
+        "limit_day_db": 65,
+        "limit_night_db": 50,
+        "compliant": True,
+        "distance_to_route_m": 30,
+        "flights_per_hour": 12,
+        "complaints_30d": 0,
+    },
+]
+
+
+@router.get(
+    "/routes",
+    tags=["Routes"],
+    summary="Alle Routen abrufen",
+    description="Gibt alle verfügbaren Drohnen-Routen zurück.",
+)
+async def get_routes():
+    """Gibt alle verfügbaren Routen zurück."""
+    return {
+        "routes": DEMO_ROUTES,
+        "count": len(DEMO_ROUTES),
+        "timestamp": datetime.now().isoformat(),
+    }
+
+
+@router.get(
+    "/routes/{route_id}",
+    tags=["Routes"],
+    summary="Route nach ID abrufen",
+    description="Gibt eine spezifische Route anhand ihrer ID zurück.",
+)
+async def get_route(route_id: str):
+    """Gibt eine spezifische Route zurück."""
+    for route in DEMO_ROUTES:
+        if route["id"] == route_id:
+            return route
+    raise HTTPException(status_code=404, detail=f"Route '{route_id}' not found")
+
+
+@router.get(
+    "/drones",
+    tags=["Fleet"],
+    summary="Alle Drohnen abrufen",
+    description="Gibt den Status aller registrierten Drohnen zurück.",
+)
+async def get_drones():
+    """Gibt alle registrierten Drohnen zurück."""
+    # Berechne Flotten-Statistiken
+    active = sum(1 for d in DEMO_DRONES if d["status"] == "active")
+    charging = sum(1 for d in DEMO_DRONES if d["status"] == "charging")
+    maintenance = sum(1 for d in DEMO_DRONES if d["status"] == "maintenance")
+
+    return {
+        "drones": DEMO_DRONES,
+        "count": len(DEMO_DRONES),
+        "statistics": {
+            "active": active,
+            "charging": charging,
+            "maintenance": maintenance,
+            "total_flights_today": sum(d["flights_today"] for d in DEMO_DRONES),
+        },
+        "timestamp": datetime.now().isoformat(),
+    }
+
+
+@router.get(
+    "/immissionsorte",
+    tags=["Noise Monitoring"],
+    summary="Alle Immissionsorte abrufen",
+    description="Gibt alle Lärm-Messpunkte mit aktuellem Status zurück.",
+)
+async def get_immissionsorte():
+    """Gibt alle Immissionsorte zurück."""
+    compliant = sum(1 for io in DEMO_IMMISSIONSORTE if io["compliant"])
+
+    return {
+        "immissionsorte": DEMO_IMMISSIONSORTE,
+        "count": len(DEMO_IMMISSIONSORTE),
+        "statistics": {
+            "compliant": compliant,
+            "non_compliant": len(DEMO_IMMISSIONSORTE) - compliant,
+            "total_complaints_30d": sum(io["complaints_30d"] for io in DEMO_IMMISSIONSORTE),
+        },
+        "timestamp": datetime.now().isoformat(),
+    }
+
+
+@router.get(
+    "/config",
+    tags=["Configuration"],
+    summary="Frontend-Konfiguration abrufen",
+    description="Gibt Konfigurationswerte für das Frontend zurück.",
+)
+async def get_config():
+    """Gibt Frontend-Konfiguration zurück."""
+    return {
+        "version": "1.0.0",
+        "features": {
+            "3d_visualization": True,
+            "live_tracking": True,
+            "noise_heatmap": True,
+            "route_optimization": True,
+            "audit_trail": True,
+        },
+        "limits": {
+            "max_routes": 10,
+            "max_grid_size": 2000,
+            "websocket_timeout_ms": 30000,
+        },
+        "map": {
+            "default_center": {"lat": 52.48, "lng": 13.35},
+            "default_zoom": 13,
+            "max_zoom": 19,
+        },
+        "ta_laerm_limits": TALaermChecker.LIMITS,
+        "timestamp": datetime.now().isoformat(),
+    }

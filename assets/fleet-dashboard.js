@@ -30,8 +30,54 @@ const destinations = [
     { id: 'helios', name: 'HELIOS Buch', shortName: 'HEL' }
 ];
 
-// Initialize fleet state with simulated data
-function initFleetState() {
+// Initialize fleet state - versucht API, fällt auf Mock-Daten zurück
+async function initFleetState() {
+    const now = new Date();
+
+    // Versuche Daten von API zu laden
+    if (typeof MORPHEUS_API !== 'undefined') {
+        try {
+            const response = await MORPHEUS_API.fetchDrones();
+            if (response && response.drones) {
+                // API-Daten in lokales Format konvertieren
+                fleetState.drones = response.drones.map(drone => ({
+                    id: drone.id,
+                    name: drone.name,
+                    model: drone.model,
+                    maxPayload: 2.5,
+                    maxRange: 25,
+                    status: drone.status,
+                    battery: drone.battery_percent,
+                    currentPosition: drone.position,
+                    destination: drone.destination ? { name: drone.destination } : null,
+                    eta: drone.eta_minutes ? new Date(now.getTime() + drone.eta_minutes * 60000) : null,
+                    maintenanceCountdown: drone.status === 'maintenance' ? 45 : 480,
+                    flightsToday: drone.flights_today,
+                    lastMaintenance: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)
+                }));
+
+                fleetState.performance = response.statistics || {};
+                console.info('Fleet-Daten von API geladen:', response.count, 'Drohnen');
+            }
+        } catch (error) {
+            console.warn('API nicht erreichbar, nutze lokale Daten:', error.message);
+            initFleetStateFallback();
+        }
+    } else {
+        initFleetStateFallback();
+    }
+
+    // Generate flight schedule
+    generateFlightSchedule();
+
+    // Calculate performance metrics
+    calculatePerformanceMetrics();
+
+    fleetState.lastUpdate = now;
+}
+
+// Fallback: Lokale Mock-Daten
+function initFleetStateFallback() {
     const statuses = ['active', 'active', 'active', 'charging', 'maintenance'];
     const now = new Date();
 
@@ -52,14 +98,6 @@ function initFleetState() {
             lastMaintenance: new Date(now.getTime() - Math.random() * 7 * 24 * 60 * 60 * 1000)
         };
     });
-
-    // Generate flight schedule
-    generateFlightSchedule();
-
-    // Calculate performance metrics
-    calculatePerformanceMetrics();
-
-    fleetState.lastUpdate = now;
 }
 
 // Generate random position near Berlin
