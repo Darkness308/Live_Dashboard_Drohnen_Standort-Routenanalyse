@@ -599,12 +599,14 @@ main {
   box-shadow: 0 0 8px currentColor;
 }
 
-/* Toggle Switch - Styled & Accessible */
+/* Toggle Switch - Styled & Accessible (44px Touch-Target) */
 .toggle-switch {
   position: relative;
-  display: inline-block;
-  width: 44px;
-  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 44px;  /* WCAG 2.5.5: Min 44px Touch-Target */
   flex-shrink: 0;
 }
 
@@ -624,7 +626,11 @@ main {
 .toggle-slider {
   position: absolute;
   cursor: pointer;
-  inset: 0;
+  width: 44px;
+  height: 24px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   background: var(--color-bg-elevated);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-full);
@@ -637,7 +643,8 @@ main {
   height: 18px;
   width: 18px;
   left: 2px;
-  bottom: 2px;
+  top: 50%;
+  transform: translateY(-50%);
   background: var(--color-text-tertiary);
   border-radius: 50%;
   transition: all var(--transition-spring);
@@ -650,7 +657,7 @@ input:checked + .toggle-slider {
 }
 
 input:checked + .toggle-slider::before {
-  transform: translateX(20px);
+  transform: translate(20px, -50%);
   background: var(--color-bg-primary);
 }
 
@@ -1464,6 +1471,139 @@ footer .text-gray-400 {
 
   .perf-card.primary {
     grid-column: span 1;
+  }
+
+  /* Map-Controls: Größerer Abstand für Touch */
+  .map-controls-grid {
+    gap: var(--space-md);
+    padding: var(--space-sm);
+  }
+
+  .control-group {
+    min-height: 44px;
+    padding: var(--space-xs) var(--space-sm);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   SMALL MOBILE (375px - iPhone SE, Standard Android)
+   ───────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 375px) {
+  :root {
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+  }
+
+  .tab-button {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: 0.75rem;
+    min-width: auto;
+  }
+
+  .nav-indicator {
+    width: 8px;
+    height: 8px;
+  }
+
+  .metric-card {
+    padding: var(--space-sm);
+  }
+
+  .metric-value {
+    font-size: 1.5rem;
+  }
+
+  .metric-label {
+    font-size: 0.7rem;
+  }
+
+  #leaflet-map {
+    height: 300px;
+  }
+
+  /* Tabelle: Card-Layout statt Horizontal-Scroll */
+  .route-table {
+    display: block;
+  }
+
+  .route-table thead {
+    display: none;
+  }
+
+  .route-table tbody,
+  .route-table tr {
+    display: block;
+  }
+
+  .route-table tr {
+    margin-bottom: var(--space-md);
+    padding: var(--space-sm);
+    background: var(--color-bg-elevated);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+  }
+
+  .route-table td {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--space-xs) 0;
+    border: none;
+  }
+
+  .route-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    margin-right: var(--space-sm);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   EXTRA SMALL MOBILE (320px - Alte/kleine Geräte)
+   ───────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 320px) {
+  :root {
+    --space-sm: 0.375rem;
+    --space-md: 0.5rem;
+  }
+
+  main {
+    padding: var(--space-sm);
+  }
+
+  .tab-navigation {
+    gap: var(--space-xs);
+  }
+
+  .tab-button {
+    padding: var(--space-xs);
+    font-size: 0.7rem;
+  }
+
+  /* Hide nav indicators on very small screens */
+  .nav-indicator {
+    display: none;
+  }
+
+  .dashboard-section {
+    padding: var(--space-sm);
+  }
+
+  .section-title {
+    font-size: 0.9rem;
+  }
+
+  /* Metric cards: 1 column */
+  .grid-cols-2 {
+    grid-template-columns: 1fr !important;
+  }
+
+  .metric-icon {
+    font-size: 1.25rem;
+  }
+
+  .metric-value {
+    font-size: 1.25rem;
   }
 }
 

@@ -487,8 +487,8 @@ class GeodataService:
                         if include_geometry:
                             from shapely.geometry import mapping
                             geojson = mapping(raw.geometry)
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(f"Geometrie-Verarbeitung fehlgeschlagen fuer {raw.gml_id}: {e}")
 
                 parcels.append(GeoParcel(
                     id=raw.gml_id,
@@ -548,8 +548,8 @@ class GeodataService:
                         if include_geometry:
                             from shapely.geometry import mapping
                             geojson = mapping(raw.geometry)
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(f"Laermzonen-Geometrie fehlgeschlagen fuer {raw.id}: {e}")
 
                 zones.append(NoiseZone(
                     id=raw.id,

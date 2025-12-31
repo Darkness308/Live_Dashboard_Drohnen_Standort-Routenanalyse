@@ -334,18 +334,21 @@ async def calculate_noise(
             directivity=request.source.directivity,
         )
 
-        # Receiver erstellen
+        # Receiver erstellen mit validiertem Bodentyp-Mapping
         ground_type_map = {
             GroundTypeEnum.HARD: GroundType.HARD,
             GroundTypeEnum.SOFT: GroundType.SOFT,
             GroundTypeEnum.MIXED: GroundType.MIXED,
         }
+        mapped_ground_type = ground_type_map.get(
+            request.receiver.ground_type, GroundType.MIXED
+        )
         receiver = Receiver(
             x=request.receiver.x,
             y=request.receiver.y,
             z=request.receiver.z,
             name=request.receiver.name,
-            ground_type=ground_type_map[request.receiver.ground_type],
+            ground_type=mapped_ground_type,
         )
 
         # Weather (optional)
@@ -547,8 +550,7 @@ async def load_alkis_data(
             bbox=(bbox.xmin, bbox.ymin, bbox.xmax, bbox.ymax), srs=bbox.srs
         )
 
-        # Audit-Log im Hintergrund schreiben
-        background_tasks.add_task(loader._flush_audit_log)
+        # Audit-Log wird intern in load_alkis_data geschrieben
 
         return {
             "status": "success",
@@ -599,8 +601,7 @@ async def load_noise_mapping(
             bbox=(bbox.xmin, bbox.ymin, bbox.xmax, bbox.ymax), noise_type=noise_type
         )
 
-        if background_tasks:
-            background_tasks.add_task(loader._flush_audit_log)
+        # Audit-Log wird intern in load_noise_data geschrieben
 
         return {
             "status": "success",
