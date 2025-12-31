@@ -390,14 +390,25 @@ async def websocket_status():
 @router.get("/api/config", tags=["Config"])
 async def get_config():
     """
-    Frontend-Konfiguration (Google Maps API Key, etc.).
+    Frontend-Konfiguration (nicht-sensitive Werte).
 
-    HINWEIS: In Produktion sollten API-Keys nicht direkt exponiert werden.
-    Stattdessen sollte ein Backend-Proxy verwendet werden.
+    SICHERHEIT: API-Keys werden NICHT direkt exponiert.
+    Google Maps verwendet Domain-Restriction im Google Cloud Console.
+    Cesium-Token sollte per window.CESIUM_TOKEN oder Backend-Config gesetzt werden.
     """
-    return {
-        "apiKey": os.getenv("GOOGLE_MAPS_API_KEY", ""),
-        "mapId": os.getenv("GOOGLE_MAPS_MAP_ID", ""),
+    # Prüfe ob API-Key-Exposition erlaubt ist (nur für Entwicklung)
+    expose_keys = os.getenv("EXPOSE_API_KEYS", "false").lower() == "true"
+
+    config = {
         "wsEndpoint": "/ws/drone-position",
         "version": "1.0.0",
+        "environment": os.getenv("ENVIRONMENT", "development"),
     }
+
+    # Nur in Entwicklung: API-Keys exponieren (wenn explizit aktiviert)
+    if expose_keys:
+        config["apiKey"] = os.getenv("GOOGLE_MAPS_API_KEY", "")
+        config["mapId"] = os.getenv("GOOGLE_MAPS_MAP_ID", "")
+        config["cesiumToken"] = os.getenv("CESIUM_ION_TOKEN", "")
+
+    return config

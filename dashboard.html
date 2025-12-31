@@ -110,10 +110,14 @@
     <!-- Main Content -->
     <main id="main-content" class="container mx-auto px-4 py-4" role="main">
 
+        <!-- Live Regions für Screenreader-Ankündigungen -->
+        <div id="live-status" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+        <div id="live-alerts" class="sr-only" aria-live="assertive" aria-atomic="true" role="alert"></div>
+
         <!-- ============================================= -->
         <!-- TAB 1: INTERACTIVE MAP DASHBOARD -->
         <!-- ============================================= -->
-        <div id="tab-map" class="tab-content active" role="tabpanel" aria-labelledby="tabMapLabel">
+        <div id="tab-map" class="tab-content active" role="tabpanel" aria-labelledby="tabMapLabel" tabindex="-1">
 
             <!-- Quick Stats Row -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
@@ -155,50 +159,55 @@
                             <span class="control-label" id="layersLabel">Layer:</span>
                         </div>
 
-                        <label class="control-group cursor-pointer">
-                            <span class="route-dot" style="background: #EF4444"></span>
-                            <span class="text-sm">Route A</span>
+                        <div class="control-group">
+                            <span class="route-dot" style="background: #EF4444" aria-hidden="true"></span>
+                            <span class="text-sm" id="routeALabel">Route A</span>
                             <label class="toggle-switch">
-                                <input type="checkbox" checked data-leaflet-route="route_a">
-                                <span class="toggle-slider"></span>
+                                <input type="checkbox" checked data-leaflet-route="route_a"
+                                       aria-labelledby="routeALabel" role="switch" aria-checked="true">
+                                <span class="toggle-slider" aria-hidden="true"></span>
                             </label>
-                        </label>
+                        </div>
 
-                        <label class="control-group cursor-pointer">
-                            <span class="route-dot" style="background: #22C55E"></span>
-                            <span class="text-sm">Route B</span>
+                        <div class="control-group">
+                            <span class="route-dot" style="background: #22C55E" aria-hidden="true"></span>
+                            <span class="text-sm" id="routeBLabel">Route B</span>
                             <label class="toggle-switch">
-                                <input type="checkbox" checked data-leaflet-route="route_b">
-                                <span class="toggle-slider"></span>
+                                <input type="checkbox" checked data-leaflet-route="route_b"
+                                       aria-labelledby="routeBLabel" role="switch" aria-checked="true">
+                                <span class="toggle-slider" aria-hidden="true"></span>
                             </label>
-                        </label>
+                        </div>
 
-                        <label class="control-group cursor-pointer">
-                            <span class="route-dot" style="background: #F97316"></span>
-                            <span class="text-sm">Route C</span>
+                        <div class="control-group">
+                            <span class="route-dot" style="background: #F97316" aria-hidden="true"></span>
+                            <span class="text-sm" id="routeCLabel">Route C</span>
                             <label class="toggle-switch">
-                                <input type="checkbox" checked data-leaflet-route="route_c">
-                                <span class="toggle-slider"></span>
+                                <input type="checkbox" checked data-leaflet-route="route_c"
+                                       aria-labelledby="routeCLabel" role="switch" aria-checked="true">
+                                <span class="toggle-slider" aria-hidden="true"></span>
                             </label>
-                        </label>
+                        </div>
 
-                        <div class="border-l border-gray-300 h-6 mx-2"></div>
+                        <div class="border-l border-gray-300 h-6 mx-2" aria-hidden="true"></div>
 
-                        <label class="control-group cursor-pointer">
+                        <div class="control-group">
                             <span class="text-sm" id="heatmapLabel">Heatmap</span>
                             <label class="toggle-switch">
-                                <input type="checkbox" id="leafletHeatmapToggle">
-                                <span class="toggle-slider"></span>
+                                <input type="checkbox" id="leafletHeatmapToggle"
+                                       aria-labelledby="heatmapLabel" role="switch" aria-checked="false">
+                                <span class="toggle-slider" aria-hidden="true"></span>
                             </label>
-                        </label>
+                        </div>
 
-                        <label class="control-group cursor-pointer">
+                        <div class="control-group">
                             <span class="text-sm" id="zonesLabel">Lärmzonen</span>
                             <label class="toggle-switch">
-                                <input type="checkbox" checked id="noiseZonesToggle">
-                                <span class="toggle-slider"></span>
+                                <input type="checkbox" checked id="noiseZonesToggle"
+                                       aria-labelledby="zonesLabel" role="switch" aria-checked="true">
+                                <span class="toggle-slider" aria-hidden="true"></span>
                             </label>
-                        </label>
+                        </div>
                     </div>
                 </div>
 
@@ -257,7 +266,7 @@
         <!-- ============================================= -->
         <!-- TAB 2: FLEET STATUS DASHBOARD -->
         <!-- ============================================= -->
-        <div id="tab-fleet" class="tab-content" role="tabpanel" aria-labelledby="tabFleetLabel">
+        <div id="tab-fleet" class="tab-content" role="tabpanel" aria-labelledby="tabFleetLabel" tabindex="-1">
 
             <!-- Fleet Tracker -->
             <section class="dashboard-section" aria-labelledby="fleet-heading">
@@ -291,7 +300,7 @@
         <!-- ============================================= -->
         <!-- TAB 3: NOISE PROTECTION DASHBOARD -->
         <!-- ============================================= -->
-        <div id="tab-noise" class="tab-content" role="tabpanel" aria-labelledby="tabNoiseLabel">
+        <div id="tab-noise" class="tab-content" role="tabpanel" aria-labelledby="tabNoiseLabel" tabindex="-1">
 
             <!-- Noise Statistics -->
             <section class="dashboard-section" aria-labelledby="noise-stats-heading">
@@ -508,6 +517,50 @@
             }
         }
 
+        // =================================================================
+        // ACCESSIBILITY UTILITIES
+        // =================================================================
+
+        /**
+         * Screenreader-Ankündigung (polite)
+         * @param {string} message - Nachricht für Screenreader
+         */
+        window.announceStatus = function(message) {
+            const liveStatus = document.getElementById('live-status');
+            if (liveStatus) {
+                liveStatus.textContent = '';
+                setTimeout(() => { liveStatus.textContent = message; }, 100);
+            }
+        };
+
+        /**
+         * Screenreader-Warnung (assertive)
+         * @param {string} message - Wichtige Warnung
+         */
+        window.announceAlert = function(message) {
+            const liveAlerts = document.getElementById('live-alerts');
+            if (liveAlerts) {
+                liveAlerts.textContent = '';
+                setTimeout(() => { liveAlerts.textContent = message; }, 100);
+            }
+        };
+
+        /**
+         * Aktualisiert aria-checked bei Toggle-Switches
+         */
+        function setupToggleAccessibility() {
+            document.querySelectorAll('.toggle-switch input[role="switch"]').forEach(input => {
+                input.addEventListener('change', function() {
+                    this.setAttribute('aria-checked', this.checked ? 'true' : 'false');
+                    const label = document.getElementById(this.getAttribute('aria-labelledby'));
+                    if (label) {
+                        const state = this.checked ? 'aktiviert' : 'deaktiviert';
+                        announceStatus(`${label.textContent} ${state}`);
+                    }
+                });
+            });
+        }
+
         // Tab navigation
         function initTabs() {
             const tabButtons = document.querySelectorAll('.tab-button');
@@ -516,6 +569,7 @@
             tabButtons.forEach(button => {
                 button.addEventListener('click', () => {
                     const targetTab = button.dataset.tab;
+                    const tabLabel = button.querySelector('span:last-child')?.textContent || targetTab;
 
                     // Update buttons
                     tabButtons.forEach(btn => {
@@ -529,7 +583,33 @@
                     tabContents.forEach(content => {
                         content.classList.remove('active');
                     });
-                    document.getElementById(`tab-${targetTab}`).classList.add('active');
+                    const targetPanel = document.getElementById(`tab-${targetTab}`);
+                    targetPanel.classList.add('active');
+
+                    // Focus management und Ankündigung
+                    targetPanel.focus();
+                    announceStatus(`${tabLabel} Tab aktiv`);
+                });
+            });
+
+            // Keyboard Navigation für Tabs
+            tabButtons.forEach((button, index) => {
+                button.addEventListener('keydown', (e) => {
+                    let newIndex = index;
+                    if (e.key === 'ArrowRight') {
+                        newIndex = (index + 1) % tabButtons.length;
+                    } else if (e.key === 'ArrowLeft') {
+                        newIndex = (index - 1 + tabButtons.length) % tabButtons.length;
+                    } else if (e.key === 'Home') {
+                        newIndex = 0;
+                    } else if (e.key === 'End') {
+                        newIndex = tabButtons.length - 1;
+                    } else {
+                        return;
+                    }
+                    e.preventDefault();
+                    tabButtons[newIndex].focus();
+                    tabButtons[newIndex].click();
                 });
             });
         }
@@ -550,6 +630,9 @@
             // Initialize tabs
             initTabs();
 
+            // Initialize accessibility features
+            setupToggleAccessibility();
+
             // Initialize Leaflet map
             initLeafletMap();
 
@@ -569,6 +652,7 @@
             setInterval(updateTimestamp, 1000);
 
             console.info('MORPHEUS Dashboard initialized');
+            announceStatus('Dashboard geladen');
         });
     </script>
 </body>

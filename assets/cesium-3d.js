@@ -38,9 +38,9 @@ var MORPHEUS_CESIUM = (function () {
   // ===========================================================================
 
   const CONFIG = {
-    // Cesium Ion Access Token (kostenlos: https://cesium.com/ion/signup)
-    // In Produktion: Backend-Endpoint oder Environment Variable
-    accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder',
+    // Cesium Ion Access Token wird dynamisch geladen
+    // Konfiguration: Backend-Endpoint /api/v1/config oder window.CESIUM_TOKEN
+    accessToken: null,
 
     // Default Center (Iserlohn, NRW)
     defaultCenter: {
@@ -247,6 +247,12 @@ var MORPHEUS_CESIUM = (function () {
    * @returns {Promise<string|null>}
    */
   async function fetchTokenFromBackend() {
+    // 1. Prüfe globale Variable (für statisches Hosting)
+    if (typeof window !== 'undefined' && window.CESIUM_TOKEN) {
+      return window.CESIUM_TOKEN;
+    }
+
+    // 2. Prüfe Backend-API
     if (typeof MORPHEUS_API !== 'undefined' && MORPHEUS_API.fetchConfig) {
       try {
         const config = await MORPHEUS_API.fetchConfig();
@@ -255,6 +261,9 @@ var MORPHEUS_CESIUM = (function () {
         console.warn('[CESIUM] Backend config not available:', err.message);
       }
     }
+
+    // 3. Kein Token verfügbar - Cesium funktioniert eingeschränkt
+    console.warn('[CESIUM] Kein Access Token konfiguriert. Setze window.CESIUM_TOKEN oder konfiguriere Backend.');
     return null;
   }
 

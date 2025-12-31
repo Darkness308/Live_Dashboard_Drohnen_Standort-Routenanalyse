@@ -599,17 +599,26 @@ main {
   box-shadow: 0 0 8px currentColor;
 }
 
-/* Toggle Switch - Styled */
+/* Toggle Switch - Styled & Accessible */
 .toggle-switch {
   position: relative;
+  display: inline-block;
   width: 44px;
   height: 24px;
+  flex-shrink: 0;
 }
 
 .toggle-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
+  /* Visuell versteckt aber keyboard-zugänglich */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .toggle-slider {
@@ -647,6 +656,16 @@ input:checked + .toggle-slider::before {
 
 input:focus-visible + .toggle-slider {
   box-shadow: 0 0 0 3px rgba(var(--color-accent-primary-rgb), 0.3);
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: 2px;
+}
+
+/* High Contrast Focus für Toggle */
+@media (prefers-contrast: high) {
+  input:focus-visible + .toggle-slider {
+    outline-width: 3px;
+    outline-color: #fff;
+  }
 }
 
 /* Leaflet Popup Override */
