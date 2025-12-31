@@ -263,15 +263,34 @@ Das Projekt unterstützt automatische Fehlerbehebung:
 
 ## 🌐 API Endpoints
 
+### Routen & Flotte
+```
+GET  /api/v1/routes               # Alle Drohnen-Routen
+GET  /api/v1/routes/{id}          # Einzelne Route
+GET  /api/v1/drones               # Flottenübersicht
+GET  /api/v1/immissionsorte       # Lärmmesspunkte
+GET  /api/v1/config               # Frontend-Konfiguration
+```
+
+### Lärmberechnung
 ```
 POST /api/v1/calculate/noise      # ISO 9613-2 Berechnung
 POST /api/v1/calculate/grid       # Rasterberechnung für Lärmkarten
 POST /api/v1/compliance/check     # TA Lärm Compliance-Prüfung
 GET  /api/v1/compliance/limits    # TA Lärm Grenzwerte
+```
+
+### Geodaten
+```
 POST /api/v1/geodata/alkis        # ALKIS Flurstücke
 POST /api/v1/geodata/noise        # Lärmkartierung NRW
 GET  /api/v1/geodata/services/status  # WFS Service Status
+```
+
+### System
+```
 GET  /api/v1/audit/trail          # Audit-Log (gerichtsfest)
+GET  /health                      # Health-Check
 WS   /ws/drone-position           # WebSocket Live-Tracking
 ```
 

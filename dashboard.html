@@ -65,17 +65,44 @@
         </nav>
     </header>
 
-    <!-- Tab Navigation -->
+    <!-- Tab Navigation mit Farb-Leitsystem -->
     <div class="container mx-auto px-4 pt-4">
+        <!-- Farb-Legende für kognitive Entlastung -->
+        <div class="nav-legend" role="navigation" aria-label="Farb-Legende">
+            <div class="nav-legend-item">
+                <span class="nav-legend-dot" style="background: var(--nav-blue);"></span>
+                <span>Karten</span>
+            </div>
+            <div class="nav-legend-item">
+                <span class="nav-legend-dot" style="background: var(--nav-purple);"></span>
+                <span>Flotte</span>
+            </div>
+            <div class="nav-legend-item">
+                <span class="nav-legend-dot" style="background: var(--nav-green);"></span>
+                <span>Lärmschutz</span>
+            </div>
+            <div class="nav-legend-item">
+                <span class="nav-legend-dot" style="background: var(--nav-yellow);"></span>
+                <span>Warnung</span>
+            </div>
+            <div class="nav-legend-item">
+                <span class="nav-legend-dot" style="background: var(--nav-red);"></span>
+                <span>Kritisch</span>
+            </div>
+        </div>
+
         <div class="tab-navigation" role="tablist">
-            <button class="tab-button active" data-tab="map" role="tab" aria-selected="true" aria-controls="tab-map">
-                <span id="tabMapLabel">🗺️ Interaktive Karte</span>
+            <button class="tab-button active" data-tab="map" data-nav-color="blue" role="tab" aria-selected="true" aria-controls="tab-map">
+                <span class="nav-indicator nav-indicator-blue"></span>
+                <span id="tabMapLabel">Interaktive Karte</span>
             </button>
-            <button class="tab-button" data-tab="fleet" role="tab" aria-selected="false" aria-controls="tab-fleet">
-                <span id="tabFleetLabel">🚁 Flottenstatus</span>
+            <button class="tab-button" data-tab="fleet" data-nav-color="purple" role="tab" aria-selected="false" aria-controls="tab-fleet">
+                <span class="nav-indicator nav-indicator-purple"></span>
+                <span id="tabFleetLabel">Flottenstatus</span>
             </button>
-            <button class="tab-button" data-tab="noise" role="tab" aria-selected="false" aria-controls="tab-noise">
-                <span id="tabNoiseLabel">🔊 Lärmschutz</span>
+            <button class="tab-button" data-tab="noise" data-nav-color="green" role="tab" aria-selected="false" aria-controls="tab-noise">
+                <span class="nav-indicator nav-indicator-green"></span>
+                <span id="tabNoiseLabel">Lärmschutz</span>
             </button>
         </div>
     </div>
@@ -345,6 +372,9 @@
         </div>
     </footer>
 
+    <!-- Performance & Optimization (lädt zuerst) -->
+    <script src="assets/performance.js"></script>
+
     <!-- Load data and modules -->
     <script src="assets/api-client.js"></script>
     <script src="assets/data.js"></script>
@@ -352,6 +382,25 @@
     <script src="assets/fleet-dashboard.js"></script>
     <script src="assets/noise-dashboard.js"></script>
     <script src="assets/charts.js"></script>
+
+    <!-- Optional: 3D Visualization (lazy loaded) -->
+    <script>
+        // 3D-Module nur laden wenn benötigt
+        window.load3DModule = async function(type = 'cesium') {
+            if (type === 'cesium' && !window.MORPHEUS_CESIUM) {
+                const script = document.createElement('script');
+                script.src = 'assets/cesium-3d.js';
+                document.head.appendChild(script);
+                return new Promise(resolve => script.onload = resolve);
+            }
+            if (type === 'google' && !window.MORPHEUS_MAPS_3D) {
+                const script = document.createElement('script');
+                script.src = 'assets/google-maps-3d.js';
+                document.head.appendChild(script);
+                return new Promise(resolve => script.onload = resolve);
+            }
+        };
+    </script>
 
     <!-- Dark Theme Chart.js Configuration -->
     <script>

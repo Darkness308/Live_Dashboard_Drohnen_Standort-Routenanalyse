@@ -1480,6 +1480,155 @@ footer .text-gray-400 {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
+   FARB-NAVIGATIONSSYSTEM - Kognitive Entlastung
+
+   Farbcodierung für schnelle visuelle Orientierung:
+   🟢 nav-green  = Lärmschutz, Compliance, OK
+   🔵 nav-blue   = Karten, Routen, Navigation
+   🟣 nav-purple = 3D-Visualisierung, Premium
+   🟡 nav-yellow = Warnungen, Aufmerksamkeit
+   🔴 nav-red    = Kritisch, Fehler, Stopp
+   ⚪ nav-gray   = Inaktiv, Deaktiviert
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Farb-Navigationssystem Variablen */
+:root {
+  --nav-green: #10b981;
+  --nav-green-bg: rgba(16, 185, 129, 0.12);
+  --nav-green-border: rgba(16, 185, 129, 0.4);
+
+  --nav-blue: #3b82f6;
+  --nav-blue-bg: rgba(59, 130, 246, 0.12);
+  --nav-blue-border: rgba(59, 130, 246, 0.4);
+
+  --nav-purple: #8b5cf6;
+  --nav-purple-bg: rgba(139, 92, 246, 0.12);
+  --nav-purple-border: rgba(139, 92, 246, 0.4);
+
+  --nav-yellow: #f59e0b;
+  --nav-yellow-bg: rgba(245, 158, 11, 0.12);
+  --nav-yellow-border: rgba(245, 158, 11, 0.4);
+
+  --nav-red: #ef4444;
+  --nav-red-bg: rgba(239, 68, 68, 0.12);
+  --nav-red-border: rgba(239, 68, 68, 0.4);
+
+  --nav-gray: #6b7280;
+  --nav-gray-bg: rgba(107, 114, 128, 0.12);
+  --nav-gray-border: rgba(107, 114, 128, 0.4);
+}
+
+/* Navigations-Bereiche mit Farbcodierung */
+[data-nav-color="green"],
+.nav-zone-green {
+  border-left: 4px solid var(--nav-green) !important;
+  background: linear-gradient(90deg, var(--nav-green-bg), transparent) !important;
+}
+
+[data-nav-color="blue"],
+.nav-zone-blue {
+  border-left: 4px solid var(--nav-blue) !important;
+  background: linear-gradient(90deg, var(--nav-blue-bg), transparent) !important;
+}
+
+[data-nav-color="purple"],
+.nav-zone-purple {
+  border-left: 4px solid var(--nav-purple) !important;
+  background: linear-gradient(90deg, var(--nav-purple-bg), transparent) !important;
+}
+
+[data-nav-color="yellow"],
+.nav-zone-yellow {
+  border-left: 4px solid var(--nav-yellow) !important;
+  background: linear-gradient(90deg, var(--nav-yellow-bg), transparent) !important;
+}
+
+[data-nav-color="red"],
+.nav-zone-red {
+  border-left: 4px solid var(--nav-red) !important;
+  background: linear-gradient(90deg, var(--nav-red-bg), transparent) !important;
+}
+
+[data-nav-color="gray"],
+.nav-zone-gray {
+  border-left: 4px solid var(--nav-gray) !important;
+  background: linear-gradient(90deg, var(--nav-gray-bg), transparent) !important;
+  opacity: 0.7;
+}
+
+/* Farb-Indikator Punkte */
+.nav-indicator {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 8px;
+  animation: nav-pulse 2s infinite;
+}
+
+.nav-indicator-green { background: var(--nav-green); box-shadow: 0 0 8px var(--nav-green); }
+.nav-indicator-blue { background: var(--nav-blue); box-shadow: 0 0 8px var(--nav-blue); }
+.nav-indicator-purple { background: var(--nav-purple); box-shadow: 0 0 8px var(--nav-purple); }
+.nav-indicator-yellow { background: var(--nav-yellow); box-shadow: 0 0 8px var(--nav-yellow); }
+.nav-indicator-red { background: var(--nav-red); box-shadow: 0 0 8px var(--nav-red); animation: nav-pulse-alert 1s infinite; }
+.nav-indicator-gray { background: var(--nav-gray); box-shadow: none; animation: none; }
+
+@keyframes nav-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(0.95); }
+}
+
+@keyframes nav-pulse-alert {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.1); }
+}
+
+/* Tab-Navigation mit Farben */
+.tab-btn[data-nav-color="green"]:hover,
+.tab-btn[data-nav-color="green"].active {
+  border-color: var(--nav-green);
+  color: var(--nav-green);
+}
+
+.tab-btn[data-nav-color="blue"]:hover,
+.tab-btn[data-nav-color="blue"].active {
+  border-color: var(--nav-blue);
+  color: var(--nav-blue);
+}
+
+.tab-btn[data-nav-color="purple"]:hover,
+.tab-btn[data-nav-color="purple"].active {
+  border-color: var(--nav-purple);
+  color: var(--nav-purple);
+}
+
+/* Quick-Navigation Legende */
+.nav-legend {
+  display: flex;
+  gap: 16px;
+  padding: 12px 16px;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  border: var(--glass-border);
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.nav-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+}
+
+.nav-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
    PRINT STYLES
    ───────────────────────────────────────────────────────────────────────────── */
 @media print {
