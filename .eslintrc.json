@@ -10,7 +10,20 @@
   },
   "globals": {
     "google": "readonly",
-    "Chart": "readonly"
+    "Chart": "readonly",
+    "L": "readonly",
+    "fleetData": "writable",
+    "immissionsorte": "writable",
+    "routeData": "writable",
+    "taLaermData": "writable",
+    "complianceData": "writable",
+    "historicalNoiseData": "writable",
+    "currentLang": "writable",
+    "initMap": "writable",
+    "initCharts": "writable",
+    "updateChartsLanguage": "writable",
+    "toggleHeatmap": "writable",
+    "toggleRoute": "writable"
   },
   "rules": {
     "no-console": ["warn", { "allow": ["warn", "error", "info"] }],

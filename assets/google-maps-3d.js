@@ -1,4 +1,3 @@
-copilot/featuregoogle-maps-3d-integration
 /* assets/google-maps-3d.js - v1
    Google Maps 3D Integration (Deutsch dokumentiert)
 */
