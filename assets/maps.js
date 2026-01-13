@@ -10,30 +10,30 @@ let markers = [];
 function initMap() {
   // Default center (Berlin)
   const center = { lat: 52.520000, lng: 13.405000 };
-  
+
   // Map configuration
-  map = new google.maps.Map(document.getElementById("map"), {
+  map = new google.maps.Map(document.getElementById('map'), {
     zoom: 13,
-    center: center,
+    center,
     mapTypeId: 'roadmap',
     styles: [
       {
-        featureType: "poi",
-        elementType: "labels",
-        stylers: [{ visibility: "off" }]
-      }
+        featureType: 'poi',
+        elementType: 'labels',
+        stylers: [{ visibility: 'off' }],
+      },
     ],
     mapTypeControl: true,
     streetViewControl: false,
     fullscreenControl: true,
-    zoomControl: true
+    zoomControl: true,
   });
 
   // Initialize components
   initImmissionsortMarkers();
   initRoutePolylines();
   initHeatmap();
-  
+
   // Add event listeners for route toggles
   setupRouteToggles();
 }
@@ -43,9 +43,9 @@ function getMarkerInfoContent(point) {
   const lang = (typeof currentLang !== 'undefined' ? currentLang : 'de');
   const labels = {
     de: { noiseLevel: 'Lärmpegel', type: 'Typ' },
-    en: { noiseLevel: 'Noise Level', type: 'Type' }
+    en: { noiseLevel: 'Noise Level', type: 'Type' },
   };
-  
+
   return `
     <div style="padding: 8px; max-width: 200px;">
       <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: bold;">${point.name}</h3>
@@ -58,11 +58,11 @@ function getMarkerInfoContent(point) {
 // Initialize Immissionsorte (noise measurement points) markers
 function initImmissionsortMarkers() {
   markers = [];
-  
-  immissionsorte.forEach(point => {
+
+  immissionsorte.forEach((point) => {
     const marker = new google.maps.Marker({
       position: { lat: point.lat, lng: point.lng },
-      map: map,
+      map,
       title: point.name,
       icon: {
         path: google.maps.SymbolPath.CIRCLE,
@@ -70,18 +70,18 @@ function initImmissionsortMarkers() {
         fillColor: getNoiseColor(point.noiseLevel),
         fillOpacity: 0.8,
         strokeColor: '#ffffff',
-        strokeWeight: 2
-      }
+        strokeWeight: 2,
+      },
     });
 
     // Info window
     const infoWindow = new google.maps.InfoWindow({
-      content: getMarkerInfoContent(point)
+      content: getMarkerInfoContent(point),
     });
 
     marker.addListener('click', () => {
       // Close all other info windows
-      markers.forEach(m => m.infoWindow && m.infoWindow.close());
+      markers.forEach((m) => m.infoWindow && m.infoWindow.close());
       // Update content to current language before opening
       infoWindow.setContent(getMarkerInfoContent(point));
       infoWindow.open(map, marker);
@@ -95,7 +95,7 @@ function initImmissionsortMarkers() {
 // Initialize route polylines
 function initRoutePolylines() {
   routePolylines = [];
-  
+
   Object.entries(routeData).forEach(([key, route]) => {
     const polyline = new google.maps.Polyline({
       path: route.waypoints,
@@ -103,25 +103,23 @@ function initRoutePolylines() {
       strokeColor: route.color,
       strokeOpacity: 0.8,
       strokeWeight: 4,
-      map: map
+      map,
     });
-    
+
     routePolylines.push({
-      key: key,
-      polyline: polyline,
-      visible: true
+      key,
+      polyline,
+      visible: true,
     });
   });
 }
 
 // Initialize heatmap
 function initHeatmap() {
-  const heatmapData = immissionsorte.map(point => {
-    return {
-      location: new google.maps.LatLng(point.lat, point.lng),
-      weight: point.noiseLevel
-    };
-  });
+  const heatmapData = immissionsorte.map((point) => ({
+    location: new google.maps.LatLng(point.lat, point.lng),
+    weight: point.noiseLevel,
+  }));
 
   heatmap = new google.maps.visualization.HeatmapLayer({
     data: heatmapData,
@@ -133,8 +131,8 @@ function initHeatmap() {
       'rgba(0, 255, 0, 1)',
       'rgba(255, 255, 0, 1)',
       'rgba(255, 165, 0, 1)',
-      'rgba(255, 0, 0, 1)'
-    ]
+      'rgba(255, 0, 0, 1)',
+    ],
   });
 }
 
@@ -143,15 +141,14 @@ function toggleHeatmap() {
   if (heatmap.getMap()) {
     heatmap.setMap(null);
     return false;
-  } else {
-    heatmap.setMap(map);
-    return true;
   }
+  heatmap.setMap(map);
+  return true;
 }
 
 // Toggle route visibility
 function toggleRoute(routeKey) {
-  const route = routePolylines.find(r => r.key === routeKey);
+  const route = routePolylines.find((r) => r.key === routeKey);
   if (route) {
     route.visible = !route.visible;
     route.polyline.setMap(route.visible ? map : null);
@@ -162,13 +159,13 @@ function toggleRoute(routeKey) {
 
 // Setup route toggle event listeners
 function setupRouteToggles() {
-  document.querySelectorAll('[data-route-toggle]').forEach(toggle => {
+  document.querySelectorAll('[data-route-toggle]').forEach((toggle) => {
     toggle.addEventListener('change', (e) => {
       const routeKey = e.target.dataset.routeToggle;
       toggleRoute(routeKey);
     });
   });
-  
+
   // Heatmap toggle
   const heatmapToggle = document.getElementById('heatmapToggle');
   if (heatmapToggle) {
@@ -196,7 +193,7 @@ function translateType(type) {
       cultural: 'Kulturstätte',
       transport: 'Verkehrsknotenpunkt',
       government: 'Behörde',
-      industrial: 'Industriegebiet'
+      industrial: 'Industriegebiet',
     },
     en: {
       residential: 'Residential Area',
@@ -205,10 +202,10 @@ function translateType(type) {
       cultural: 'Cultural Site',
       transport: 'Transport Hub',
       government: 'Government',
-      industrial: 'Industrial Area'
-    }
+      industrial: 'Industrial Area',
+    },
   };
-  
+
   // Get current language from global variable or default to 'de'
   const lang = (typeof currentLang !== 'undefined' ? currentLang : 'de');
   return translations[lang][type] || type;
@@ -217,13 +214,13 @@ function translateType(type) {
 // Fit map to show all routes
 function fitMapToRoutes() {
   const bounds = new google.maps.LatLngBounds();
-  
-  Object.values(routeData).forEach(route => {
-    route.waypoints.forEach(waypoint => {
+
+  Object.values(routeData).forEach((route) => {
+    route.waypoints.forEach((waypoint) => {
       bounds.extend(waypoint);
     });
   });
-  
+
   map.fitBounds(bounds);
 }
 
@@ -232,7 +229,7 @@ function zoomToRoute(routeKey) {
   const route = routeData[routeKey];
   if (route) {
     const bounds = new google.maps.LatLngBounds();
-    route.waypoints.forEach(waypoint => {
+    route.waypoints.forEach((waypoint) => {
       bounds.extend(waypoint);
     });
     map.fitBounds(bounds);

@@ -18,9 +18,7 @@
  * @version 1.0.0
  */
 
-var MORPHEUS_PERF = (function () {
-  'use strict';
-
+const MORPHEUS_PERF = (function () {
   // ===========================================================================
   // CONFIGURATION
   // ===========================================================================
@@ -42,7 +40,7 @@ var MORPHEUS_PERF = (function () {
 
     // Animation Settings
     reducedMotionDuration: 0,
-    normalDuration: 300
+    normalDuration: 300,
   };
 
   // ===========================================================================
@@ -50,7 +48,7 @@ var MORPHEUS_PERF = (function () {
   // ===========================================================================
 
   let lazyLoadObserver = null;
-  let visibilityObserver = null;
+  const visibilityObserver = null;
   const loadedResources = new Set();
   let prefetchCount = 0;
 
@@ -63,7 +61,7 @@ var MORPHEUS_PERF = (function () {
     requestIdleCallback: 'requestIdleCallback' in window,
     connection: 'connection' in navigator,
     reducedMotion: window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches,
-    saveData: navigator.connection?.saveData || false
+    saveData: navigator.connection?.saveData || false,
   };
 
   /**
@@ -111,11 +109,11 @@ var MORPHEUS_PERF = (function () {
     lazyLoadObserver = new IntersectionObserver(handleLazyIntersection, {
       root: null,
       rootMargin: CONFIG.lazyLoadRootMargin,
-      threshold: CONFIG.lazyLoadThreshold
+      threshold: CONFIG.lazyLoadThreshold,
     });
 
     // Alle lazy Elemente observieren
-    document.querySelectorAll('[data-lazy]').forEach(el => {
+    document.querySelectorAll('[data-lazy]').forEach((el) => {
       lazyLoadObserver.observe(el);
     });
 
@@ -126,7 +124,7 @@ var MORPHEUS_PERF = (function () {
    * IntersectionObserver Callback
    */
   function handleLazyIntersection(entries) {
-    entries.forEach(entry => {
+    entries.forEach((entry) => {
       if (entry.isIntersecting) {
         const el = entry.target;
         loadLazyElement(el);
@@ -194,7 +192,7 @@ var MORPHEUS_PERF = (function () {
 
     // Event dispatchen fuer externe Handler
     const event = new CustomEvent('lazyComponentLoad', {
-      detail: { element: el, component: componentName }
+      detail: { element: el, component: componentName },
     });
     document.dispatchEvent(event);
 
@@ -205,12 +203,12 @@ var MORPHEUS_PERF = (function () {
    * Laedt einen Karten-Layer lazy
    */
   function loadMapLayer(el) {
-    const layerType = el.dataset.layerType;
-    const layerUrl = el.dataset.layerUrl;
+    const { layerType } = el.dataset;
+    const { layerUrl } = el.dataset;
 
     if (layerType && layerUrl) {
       const event = new CustomEvent('lazyMapLayerLoad', {
-        detail: { element: el, type: layerType, url: layerUrl }
+        detail: { element: el, type: layerType, url: layerUrl },
       });
       document.dispatchEvent(event);
     }
@@ -261,13 +259,13 @@ var MORPHEUS_PERF = (function () {
    */
   function addCriticalPreconnects() {
     const criticalOrigins = [
-      'https://unpkg.com',           // Leaflet
-      'https://cdn.jsdelivr.net',    // Chart.js
+      'https://unpkg.com', // Leaflet
+      'https://cdn.jsdelivr.net', // Chart.js
       'https://cdn.tailwindcss.com', // Tailwind
-      'https://cesium.com'           // CesiumJS
+      'https://cesium.com', // CesiumJS
     ];
 
-    criticalOrigins.forEach(origin => {
+    criticalOrigins.forEach((origin) => {
       addResourceHint(origin, 'preconnect', { crossOrigin: 'anonymous' });
       addResourceHint(origin, 'dns-prefetch');
     });
@@ -400,7 +398,7 @@ var MORPHEUS_PERF = (function () {
    */
   function throttle(func, limit) {
     let inThrottle;
-    return function(...args) {
+    return function (...args) {
       if (!inThrottle) {
         func.apply(this, args);
         inThrottle = true;
@@ -433,7 +431,7 @@ var MORPHEUS_PERF = (function () {
    * @returns {Promise}
    */
   function animateIfAllowed(element, animationClass, duration = 300) {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       if (prefersReducedMotion()) {
         resolve();
         return;
@@ -519,7 +517,7 @@ var MORPHEUS_PERF = (function () {
   function measurePerformance() {
     if (!window.performance) return null;
 
-    const timing = performance.timing;
+    const { timing } = performance;
     const navigation = performance.getEntriesByType('navigation')[0];
 
     const metrics = {
@@ -536,8 +534,8 @@ var MORPHEUS_PERF = (function () {
       // Memory (Chrome only)
       memory: performance.memory ? {
         usedJSHeapSize: Math.round(performance.memory.usedJSHeapSize / 1024 / 1024),
-        totalJSHeapSize: Math.round(performance.memory.totalJSHeapSize / 1024 / 1024)
-      } : null
+        totalJSHeapSize: Math.round(performance.memory.totalJSHeapSize / 1024 / 1024),
+      } : null,
     };
 
     console.log('[PERF] Performance Metrics:', metrics);
@@ -568,7 +566,7 @@ var MORPHEUS_PERF = (function () {
         performance.measure(
           `morpheus_${name}`,
           `morpheus_${startMark}`,
-          `morpheus_${endMark}`
+          `morpheus_${endMark}`,
         );
       } catch (e) {
         // Marker existieren nicht
@@ -653,10 +651,9 @@ var MORPHEUS_PERF = (function () {
     // Metrics
     measurePerformance,
     mark,
-    measure
+    measure,
   };
-
-})();
+}());
 
 // Auto-Init wenn DOM bereit
 if (document.readyState === 'loading') {

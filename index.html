@@ -312,17 +312,34 @@
 
     <!-- Google Maps JavaScript API -->
     <script>
-        // Load Google Maps API with your API key
-        // IMPORTANT SECURITY NOTE: In production, the API key should be loaded server-side
-        // or restricted by domain/referrer in Google Cloud Console to prevent unauthorized use.
-        // This client-side implementation is for demonstration purposes.
-        // For production use, consider:
-        // 1. Setting up domain restrictions in Google Cloud Console
-        // 2. Using a backend proxy to hide the API key
-        // 3. Implementing request limits and monitoring
+        /**
+         * SECURITY CRITICAL: Google Maps API Key
+         * 
+         * ⚠️ DO NOT commit real API keys to version control
+         * ⚠️ This is a PLACEHOLDER - replace with environment-specific key
+         * ⚠️ In production, load from secure environment variables
+         * 
+         * Setup Instructions:
+         * 1. Create .env file (already in .gitignore)
+         * 2. Add: GOOGLE_MAPS_API_KEY=your_actual_key_here
+         * 3. Load via: process.env.GOOGLE_MAPS_API_KEY (if using bundler)
+         * 4. OR use server-side proxy to hide key from client
+         * 
+         * Google Cloud Console restrictions:
+         * - Enable HTTP Referrer restrictions
+         * - Limit to your domain(s) only
+         * - Enable API key quotas
+         * - Monitor usage in GCP dashboard
+         */
         const GOOGLE_MAPS_API_KEY = 'YOUR_API_KEY'; // Replace with your API key (with domain restrictions)
         
         function loadGoogleMapsAPI() {
+            if (!GOOGLE_MAPS_API_KEY || GOOGLE_MAPS_API_KEY === 'YOUR_API_KEY') {
+                console.error('❌ CRITICAL: Valid Google Maps API key required');
+                console.info('📖 See .env.example for setup instructions');
+                return;
+            }
+            
             const script = document.createElement('script');
             script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=visualization&callback=initMap`;
             script.async = true;
