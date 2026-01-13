@@ -82,7 +82,7 @@ const getComplianceStatus = (current, limit) => {
   const percentage = (current / limit) * 100;
   if (percentage <= 80) {
     return `<span class="compliance-good">${mapLang === 'de' ? 'Konform' : 'Compliant'}</span>`;
-  } if (percentage <= 100) {
+  } else if (percentage <= 100) {
     return `<span class="compliance-warning">${mapLang === 'de' ? 'Grenzwertnah' : 'Near Limit'}</span>`;
   }
   return `<span class="compliance-danger">${mapLang === 'de' ? 'Überschreitung' : 'Exceeded'}</span>`;

@@ -669,4 +669,3 @@ var MORPHEUS_GMAPS = (function () {
 if (typeof window !== 'undefined') {
   window.MORPHEUS_GMAPS = MORPHEUS_GMAPS;
 }
-main;
