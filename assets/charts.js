@@ -35,7 +35,7 @@ function initNoiseComparisonChart() {
           borderColor: routeData.route1.color,
           backgroundColor: `${routeData.route1.color}20`,
           tension: 0.4,
-          fill: true
+          fill: true,
         },
         {
           label: routeData.route2.name,
@@ -43,7 +43,7 @@ function initNoiseComparisonChart() {
           borderColor: routeData.route2.color,
           backgroundColor: `${routeData.route2.color}20`,
           tension: 0.4,
-          fill: true
+          fill: true,
         },
         {
           label: routeData.route3.name,
@@ -51,9 +51,9 @@ function initNoiseComparisonChart() {
           borderColor: routeData.route3.color,
           backgroundColor: `${routeData.route3.color}20`,
           tension: 0.4,
-          fill: true
-        }
-      ]
+          fill: true,
+        },
+      ],
     },
     options: {
       responsive: true,
@@ -61,19 +61,19 @@ function initNoiseComparisonChart() {
       plugins: {
         legend: {
           display: true,
-          position: 'bottom'
+          position: 'bottom',
         },
         title: {
           display: true,
-          text: lang === 'de' ? 'Historische Lärmbelastung (7 Tage)' : 'Historical Noise Exposure (7 Days)'
+          text: lang === 'de' ? 'Historische Lärmbelastung (7 Tage)' : 'Historical Noise Exposure (7 Days)',
         },
         tooltip: {
           callbacks: {
             label(context) {
               return `${context.dataset.label}: ${context.parsed.y} dB(A)`;
-            }
-          }
-        }
+            },
+          },
+        },
       },
       scales: {
         y: {
@@ -82,11 +82,11 @@ function initNoiseComparisonChart() {
           max: 70,
           title: {
             display: true,
-            text: 'dB(A)'
-          }
-        }
-      }
-    }
+            text: 'dB(A)',
+          },
+        },
+      },
+    },
   });
 }
 
@@ -116,7 +116,7 @@ function initTALaermComplianceChart() {
             return v > limit ? '#EF4444' : '#10B981';
           }),
           borderColor: '#1F2937',
-          borderWidth: 1
+          borderWidth: 1,
         },
         {
           label: lang === 'de' ? 'Taggrenze (55 dB)' : 'Day Limit (55 dB)',
@@ -126,7 +126,7 @@ function initTALaermComplianceChart() {
           borderWidth: 2,
           borderDash: [5, 5],
           fill: false,
-          pointRadius: 0
+          pointRadius: 0,
         },
         {
           label: lang === 'de' ? 'Nachtgrenze (40 dB)' : 'Night Limit (40 dB)',
@@ -136,9 +136,9 @@ function initTALaermComplianceChart() {
           borderWidth: 2,
           borderDash: [5, 5],
           fill: false,
-          pointRadius: 0
-        }
-      ]
+          pointRadius: 0,
+        },
+      ],
     },
     options: {
       responsive: true,
@@ -146,11 +146,11 @@ function initTALaermComplianceChart() {
       plugins: {
         legend: {
           display: true,
-          position: 'bottom'
+          position: 'bottom',
         },
         title: {
           display: true,
-          text: lang === 'de' ? 'TA Lärm Compliance (24h)' : 'TA Noise Compliance (24h)'
+          text: lang === 'de' ? 'TA Lärm Compliance (24h)' : 'TA Noise Compliance (24h)',
         },
         tooltip: {
           callbacks: {
@@ -159,9 +159,9 @@ function initTALaermComplianceChart() {
                 return context.dataset.label;
               }
               return `${context.dataset.label}: ${context.parsed.y} dB(A)`;
-            }
-          }
-        }
+            },
+          },
+        },
       },
       scales: {
         y: {
@@ -170,11 +170,11 @@ function initTALaermComplianceChart() {
           max: 70,
           title: {
             display: true,
-            text: 'dB(A)'
-          }
-        }
-      }
-    }
+            text: 'dB(A)',
+          },
+        },
+      },
+    },
   });
 }
 
@@ -194,7 +194,7 @@ function initRouteComparisonChart() {
         lang === 'de' ? 'Zeit (inv)' : 'Time (inv)',
         lang === 'de' ? 'Lärmarm' : 'Low Noise',
         lang === 'de' ? 'Energieeff.' : 'Energy Eff.',
-        lang === 'de' ? 'Compliance' : 'Compliance'
+        lang === 'de' ? 'Compliance' : 'Compliance',
       ],
       datasets: routes.map((route) => ({
         label: route.name,
@@ -203,7 +203,7 @@ function initRouteComparisonChart() {
           100 - (route.duration / 25 * 100), // Inverse time (faster is better)
           100 - (route.noiseExposure / 70 * 100), // Inverse noise (quieter is better)
           100 - route.energyConsumption, // Energy efficiency
-          route.taCompliance ? 100 : 0 // Compliance
+          route.taCompliance ? 100 : 0, // Compliance
         ],
         backgroundColor: `${route.color}30`,
         borderColor: route.color,
@@ -211,8 +211,8 @@ function initRouteComparisonChart() {
         pointBorderColor: '#fff',
         pointHoverBackgroundColor: '#fff',
         pointHoverBorderColor: route.color,
-        borderWidth: 2
-      }))
+        borderWidth: 2,
+      })),
     },
     options: {
       responsive: true,
@@ -220,23 +220,23 @@ function initRouteComparisonChart() {
       plugins: {
         legend: {
           display: true,
-          position: 'bottom'
+          position: 'bottom',
         },
         title: {
           display: true,
-          text: lang === 'de' ? 'Routen-Vergleich (Mehrere Metriken)' : 'Route Comparison (Multiple Metrics)'
-        }
+          text: lang === 'de' ? 'Routen-Vergleich (Mehrere Metriken)' : 'Route Comparison (Multiple Metrics)',
+        },
       },
       scales: {
         r: {
           beginAtZero: true,
           max: 100,
           ticks: {
-            stepSize: 20
-          }
-        }
-      }
-    }
+            stepSize: 20,
+          },
+        },
+      },
+    },
   });
 }
 
@@ -245,32 +245,26 @@ function updateChartsLanguage() {
   const lang = getCurrentLang();
 
   if (noiseComparisonChart) {
-    noiseComparisonChart.options.plugins.title.text =
-      lang === 'de' ? 'Historische Lärmbelastung (7 Tage)' : 'Historical Noise Exposure (7 Days)';
+    noiseComparisonChart.options.plugins.title.text = lang === 'de' ? 'Historische Lärmbelastung (7 Tage)' : 'Historical Noise Exposure (7 Days)';
     noiseComparisonChart.update();
   }
 
   if (taLaermComplianceChart) {
-    taLaermComplianceChart.options.plugins.title.text =
-      lang === 'de' ? 'TA Lärm Compliance (24h)' : 'TA Noise Compliance (24h)';
-    taLaermComplianceChart.data.datasets[0].label =
-      lang === 'de' ? 'Gemessener Pegel' : 'Measured Level';
-    taLaermComplianceChart.data.datasets[1].label =
-      lang === 'de' ? 'Taggrenze (55 dB)' : 'Day Limit (55 dB)';
-    taLaermComplianceChart.data.datasets[2].label =
-      lang === 'de' ? 'Nachtgrenze (40 dB)' : 'Night Limit (40 dB)';
+    taLaermComplianceChart.options.plugins.title.text = lang === 'de' ? 'TA Lärm Compliance (24h)' : 'TA Noise Compliance (24h)';
+    taLaermComplianceChart.data.datasets[0].label = lang === 'de' ? 'Gemessener Pegel' : 'Measured Level';
+    taLaermComplianceChart.data.datasets[1].label = lang === 'de' ? 'Taggrenze (55 dB)' : 'Day Limit (55 dB)';
+    taLaermComplianceChart.data.datasets[2].label = lang === 'de' ? 'Nachtgrenze (40 dB)' : 'Night Limit (40 dB)';
     taLaermComplianceChart.update();
   }
 
   if (routeComparisonChart) {
-    routeComparisonChart.options.plugins.title.text =
-      lang === 'de' ? 'Routen-Vergleich (Mehrere Metriken)' : 'Route Comparison (Multiple Metrics)';
+    routeComparisonChart.options.plugins.title.text = lang === 'de' ? 'Routen-Vergleich (Mehrere Metriken)' : 'Route Comparison (Multiple Metrics)';
     routeComparisonChart.data.labels = [
       lang === 'de' ? 'Distanz (inv)' : 'Distance (inv)',
       lang === 'de' ? 'Zeit (inv)' : 'Time (inv)',
       lang === 'de' ? 'Lärmarm' : 'Low Noise',
       lang === 'de' ? 'Energieeff.' : 'Energy Eff.',
-      lang === 'de' ? 'Compliance' : 'Compliance'
+      lang === 'de' ? 'Compliance' : 'Compliance',
     ];
     routeComparisonChart.update();
   }
