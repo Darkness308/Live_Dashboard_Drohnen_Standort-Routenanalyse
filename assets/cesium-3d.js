@@ -30,9 +30,7 @@
 
 /* globals MORPHEUS_API, Cesium */
 
-var MORPHEUS_CESIUM = (function () {
-  'use strict';
-
+const MORPHEUS_CESIUM = (function () {
   // ===========================================================================
   // CONFIGURATION
   // ===========================================================================
@@ -46,7 +44,7 @@ var MORPHEUS_CESIUM = (function () {
     defaultCenter: {
       longitude: 7.6944,
       latitude: 51.3759,
-      height: 500
+      height: 500,
     },
 
     // Terrain Provider
@@ -60,28 +58,28 @@ var MORPHEUS_CESIUM = (function () {
       width: 8,
       material: {
         glowPower: 0.2,
-        taperPower: 1.0
-      }
+        taperPower: 1.0,
+      },
     },
 
     // Noise Corridor Defaults
     noiseCorridorDefaults: {
-      width: 100,        // Meter links/rechts der Route
+      width: 100, // Meter links/rechts der Route
       opacity: 0.3,
       colorScale: [
-        { db: 35, color: [0, 255, 0, 0.2] },    // Gruen - leise
-        { db: 45, color: [255, 255, 0, 0.3] },  // Gelb
-        { db: 55, color: [255, 165, 0, 0.4] },  // Orange
-        { db: 65, color: [255, 0, 0, 0.5] }     // Rot - laut
-      ]
+        { db: 35, color: [0, 255, 0, 0.2] }, // Gruen - leise
+        { db: 45, color: [255, 255, 0, 0.3] }, // Gelb
+        { db: 55, color: [255, 165, 0, 0.4] }, // Orange
+        { db: 65, color: [255, 0, 0, 0.5] }, // Rot - laut
+      ],
     },
 
     // Animation
     flightAnimation: {
-      defaultDuration: 30,  // Sekunden
-      heightOffset: 50,     // Meter ueber Route
-      tilt: -30             // Kameraneigung
-    }
+      defaultDuration: 30, // Sekunden
+      heightOffset: 50, // Meter ueber Route
+      tilt: -30, // Kameraneigung
+    },
   };
 
   // ===========================================================================
@@ -201,7 +199,7 @@ var MORPHEUS_CESIUM = (function () {
       selectionIndicator: true,
       infoBox: true,
       shadows: true,
-      shouldAnimate: true
+      shouldAnimate: true,
     });
 
     // 3D Gebaeude laden
@@ -221,14 +219,14 @@ var MORPHEUS_CESIUM = (function () {
       destination: Cesium.Cartesian3.fromDegrees(
         center.longitude,
         center.latitude,
-        center.height || 1000
+        center.height || 1000,
       ),
       orientation: {
         heading: Cesium.Math.toRadians(0),
         pitch: Cesium.Math.toRadians(-45),
-        roll: 0
+        roll: 0,
       },
-      duration: 2
+      duration: 2,
     });
 
     // Performance-Optimierungen
@@ -302,7 +300,7 @@ var MORPHEUS_CESIUM = (function () {
       Cesium.Color.fromCssColorString('#10b981'),
       Cesium.Color.fromCssColorString('#f59e0b'),
       Cesium.Color.fromCssColorString('#ef4444'),
-      Cesium.Color.fromCssColorString('#8b5cf6')
+      Cesium.Color.fromCssColorString('#8b5cf6'),
     ];
 
     routes.forEach((route, index) => {
@@ -319,10 +317,10 @@ var MORPHEUS_CESIUM = (function () {
       }
 
       // Koordinaten fuer Cesium aufbereiten
-      const positions = route.waypoints.flatMap(wp => [
+      const positions = route.waypoints.flatMap((wp) => [
         wp.lng || wp.longitude,
         wp.lat || wp.latitude,
-        wp.alt || wp.altitude || wp.height || 100
+        wp.alt || wp.altitude || wp.height || 100,
       ]);
 
       const color = route.color
@@ -331,7 +329,7 @@ var MORPHEUS_CESIUM = (function () {
 
       // Route als Polyline mit Glowing Effect
       const entity = viewer.entities.add({
-        id: id,
+        id,
         name: route.name || `Route ${index + 1}`,
         description: buildRouteDescription(route),
         polyline: {
@@ -340,10 +338,10 @@ var MORPHEUS_CESIUM = (function () {
           material: new Cesium.PolylineGlowMaterialProperty({
             glowPower: CONFIG.routeDefaults.material.glowPower,
             taperPower: CONFIG.routeDefaults.material.taperPower,
-            color: color
+            color,
           }),
-          clampToGround: false
-        }
+          clampToGround: false,
+        },
       });
 
       routeEntities[id] = entity;
@@ -358,14 +356,14 @@ var MORPHEUS_CESIUM = (function () {
             position: Cesium.Cartesian3.fromDegrees(
               wp.lng || wp.longitude,
               wp.lat || wp.latitude,
-              wp.alt || wp.altitude || 100
+              wp.alt || wp.altitude || 100,
             ),
             point: {
               pixelSize: isStart ? 12 : 10,
               color: isStart ? Cesium.Color.LIME : Cesium.Color.RED,
               outlineColor: Cesium.Color.WHITE,
               outlineWidth: 2,
-              heightReference: Cesium.HeightReference.NONE
+              heightReference: Cesium.HeightReference.NONE,
             },
             label: {
               text: isStart ? 'START' : 'ZIEL',
@@ -375,8 +373,8 @@ var MORPHEUS_CESIUM = (function () {
               outlineWidth: 2,
               style: Cesium.LabelStyle.FILL_AND_OUTLINE,
               verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-              pixelOffset: new Cesium.Cartesian2(0, -15)
-            }
+              pixelOffset: new Cesium.Cartesian2(0, -15),
+            },
           });
         }
       });
@@ -450,13 +448,13 @@ var MORPHEUS_CESIUM = (function () {
       id: `corridor-${routeId}`,
       name: `Laermkorridor ${routeId}`,
       corridor: {
-        positions: positions,
-        width: width,
+        positions,
+        width,
         material: color.withAlpha(CONFIG.noiseCorridorDefaults.opacity),
         height: 0,
-        extrudedHeight: 150,  // Hoehe des Korridors
-        cornerType: Cesium.CornerType.ROUNDED
-      }
+        extrudedHeight: 150, // Hoehe des Korridors
+        cornerType: Cesium.CornerType.ROUNDED,
+      },
     });
 
     noiseCorridors[routeId] = corridor;
@@ -535,7 +533,7 @@ var MORPHEUS_CESIUM = (function () {
       const adjustedPos = Cesium.Cartesian3.fromRadians(
         cartographic.longitude,
         cartographic.latitude,
-        cartographic.height + heightOffset
+        cartographic.height + heightOffset,
       );
       positionProperty.addSample(time, adjustedPos);
     });
@@ -543,10 +541,10 @@ var MORPHEUS_CESIUM = (function () {
     // Temporaere Kamera-Entity
     const cameraEntity = viewer.entities.add({
       availability: new Cesium.TimeIntervalCollection([
-        new Cesium.TimeInterval({ start: startTime, stop: stopTime })
+        new Cesium.TimeInterval({ start: startTime, stop: stopTime }),
       ]),
       position: positionProperty,
-      orientation: new Cesium.VelocityOrientationProperty(positionProperty)
+      orientation: new Cesium.VelocityOrientationProperty(positionProperty),
     });
 
     // Viewer Timeline konfigurieren
@@ -601,7 +599,9 @@ var MORPHEUS_CESIUM = (function () {
       return;
     }
 
-    const { lat, lng, alt = 100, heading = 0, droneId = 'drone-001' } = position;
+    const {
+      lat, lng, alt = 100, heading = 0, droneId = 'drone-001',
+    } = position;
 
     if (typeof lat !== 'number' || typeof lng !== 'number') {
       console.warn('[CESIUM] Invalid drone coordinates');
@@ -611,7 +611,7 @@ var MORPHEUS_CESIUM = (function () {
     const cartesianPos = Cesium.Cartesian3.fromDegrees(lng, lat, alt);
     const orientation = Cesium.Transforms.headingPitchRollQuaternion(
       cartesianPos,
-      new Cesium.HeadingPitchRoll(Cesium.Math.toRadians(heading), 0, 0)
+      new Cesium.HeadingPitchRoll(Cesium.Math.toRadians(heading), 0, 0),
     );
 
     if (!droneEntity) {
@@ -620,13 +620,13 @@ var MORPHEUS_CESIUM = (function () {
         id: droneId,
         name: `Drohne ${droneId}`,
         position: cartesianPos,
-        orientation: orientation,
+        orientation,
         model: {
           uri: 'https://raw.githubusercontent.com/CesiumGS/cesium/main/Apps/SampleData/models/CesiumDrone/CesiumDrone.glb',
           minimumPixelSize: 64,
           maximumScale: 500,
           silhouetteColor: Cesium.Color.CYAN,
-          silhouetteSize: 2
+          silhouetteSize: 2,
         },
         label: {
           text: droneId,
@@ -636,8 +636,8 @@ var MORPHEUS_CESIUM = (function () {
           outlineWidth: 2,
           style: Cesium.LabelStyle.FILL_AND_OUTLINE,
           verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-          pixelOffset: new Cesium.Cartesian2(0, -50)
-        }
+          pixelOffset: new Cesium.Cartesian2(0, -50),
+        },
       });
 
       console.log(`[CESIUM] Drone entity created: ${droneId}`);
@@ -699,9 +699,9 @@ var MORPHEUS_CESIUM = (function () {
       orientation: {
         heading: Cesium.Math.toRadians(0),
         pitch: Cesium.Math.toRadians(-45),
-        roll: 0
+        roll: 0,
       },
-      duration: duration
+      duration,
     });
   }
 
@@ -725,7 +725,7 @@ var MORPHEUS_CESIUM = (function () {
     flyTo(
       CONFIG.defaultCenter.longitude,
       CONFIG.defaultCenter.latitude,
-      CONFIG.defaultCenter.height
+      CONFIG.defaultCenter.height,
     );
   }
 
@@ -739,15 +739,15 @@ var MORPHEUS_CESIUM = (function () {
   function clearRoutes() {
     if (!viewer) return;
 
-    Object.values(routeEntities).forEach(entity => {
+    Object.values(routeEntities).forEach((entity) => {
       viewer.entities.remove(entity);
     });
-    Object.keys(routeEntities).forEach(key => delete routeEntities[key]);
+    Object.keys(routeEntities).forEach((key) => delete routeEntities[key]);
 
-    Object.values(noiseCorridors).forEach(entity => {
+    Object.values(noiseCorridors).forEach((entity) => {
       viewer.entities.remove(entity);
     });
-    Object.keys(noiseCorridors).forEach(key => delete noiseCorridors[key]);
+    Object.keys(noiseCorridors).forEach((key) => delete noiseCorridors[key]);
 
     console.log('[CESIUM] All routes cleared');
   }
@@ -810,10 +810,9 @@ var MORPHEUS_CESIUM = (function () {
 
     // Camera
     flyTo,
-    resetView
+    resetView,
   };
-
-})();
+}());
 
 // Export fuer Node.js/CommonJS (Testing)
 if (typeof module !== 'undefined' && module.exports) {
